@@ -1,0 +1,186 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Our Menu";
+}
+@model List<_66033872_Yossayut_rutatip.Models.db.Product>
+
+@{
+    var isCustomer = User.IsInRole("CUSTOMER");
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="menu-hero py-5">
+    <div class="container text-center">
+        <h2 class="menu-page-title">Our Menu</h2>
+        <p class="menu-page-subtitle">คัดสรรความอร่อยมาเพื่อคุณ</p>
+
+        <div class="row justify-content-center mt-4">
+            <div class="col-12 col-md-10">
+                <div class="search-bar bg-white shadow-sm rounded-pill p-2 px-4 d-flex align-items-center">
+                    <i class="fas fa-search text-muted me-3"></i>
+                    <input type="text" class="form-control border-0" placeholder="ค้นหาเมนู..." data-menu-search>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap" data-menu-filters>
+            <button type="button" class="btn btn-sm btn-outline-dark active-pill" data-filter="ALL">All</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="BREAD">Bread</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="CAKE">Cake</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="COOKIE">Cookie</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="PASTRY">Pastry</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="BEVERAGE">Beverage</button>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4" data-menu-grid>
+        @foreach (var p in Model)
+        {
+            var categoryName = p.Category?.Name ?? string.Empty;
+            var searchText = string.Join(" ", new[] { p.Name, categoryName, p.Description ?? string.Empty });
+            <div class="col-6 col-md-4 col-lg-3 menu-item" data-category="@categoryName.ToUpperInvariant()" data-search="@searchText.ToUpperInvariant()">
+                <div class="menu-card bg-white rounded-3 shadow-sm h-100 position-relative">
+                    <div class="menu-card-img" style="background-image:url('@(string.IsNullOrWhiteSpace(p.ImageUrl) ? "https://via.placeholder.com/300x160" : p.ImageUrl)');"></div>
+                    <div class="p-3">
+                        <div class="small text-muted">@categoryName</div>
+                        <h6 class="fw-bold mt-1">@p.Name</h6>
+                        <p class="text-muted small mb-3">@p.Description</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-bold text-dark">฿@p.Price.ToString("N2")</div>
+                            @if (isCustomer)
+                            {
+                                <form asp-controller="PublicPage" asp-action="AddToCart" method="post" class="m-0 ajax-cart-form">
+                                    <input type="hidden" name="productId" value="@p.ProductId" />
+                                    <input type="hidden" name="qty" value="1" />
+                                    <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                    <button type="submit" class="btn btn-sm btn-circle" aria-label="เพิ่ม">+</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-sm btn-circle" aria-label="login">+</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .menu-hero { background-color: #fbf7f2; }
+    .menu-page-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 3.2vw, 2.6rem);
+        font-weight: 700;
+        color: #2a2017;
+        margin-bottom: 0.35rem;
+        letter-spacing: 0.2px;
+    }
+    .menu-page-subtitle {
+        font-family: 'Noto Sans Thai', sans-serif;
+        color: #7d6a55;
+        margin-bottom: 0;
+    }
+    .search-bar { max-width: 820px; margin: 0 auto; }
+    .active-pill { background-color:#8B6F47; color: #fff; border-color:#8B6F47; }
+    .menu-card { border-radius: 12px; overflow: hidden; }
+    .menu-card-img { height: 160px; background-size: cover; background-position: center; }
+    .btn-circle { width:36px; height:36px; border-radius:50%; background:#fff; border:1px solid #f0e6db; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+    .btn-circle.adding { opacity: 0.6; pointer-events: none; }
+    @@media (max-width: 576px) {
+        .menu-card-img { height: 120px; }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterContainer = document.querySelector('[data-menu-filters]');
+        if (!filterContainer) return;
+
+        const buttons = filterContainer.querySelectorAll('[data-filter]');
+        const items = document.querySelectorAll('[data-menu-grid] .menu-item');
+        const searchInput = document.querySelector('[data-menu-search]');
+        if (!buttons.length || !items.length) return;
+
+        let activeCategory = 'ALL';
+        let activeKeyword = '';
+
+        const setActive = function (activeButton) {
+            buttons.forEach(function (button) {
+                const isActive = button === activeButton;
+                button.classList.toggle('active-pill', isActive);
+                button.classList.toggle('btn-outline-dark', isActive);
+                button.classList.toggle('btn-outline-secondary', !isActive);
+            });
+        };
+
+        const applyFilter = function () {
+            items.forEach(function (item) {
+                const itemCategory = (item.getAttribute('data-category') || '').toUpperCase();
+                const itemSearchText = (item.getAttribute('data-search') || '').toUpperCase();
+                const matchCategory = activeCategory === 'ALL' || itemCategory === activeCategory;
+                const matchKeyword = !activeKeyword || itemSearchText.includes(activeKeyword);
+                const show = matchCategory && matchKeyword;
+                item.style.display = show ? '' : 'none';
+            });
+        };
+
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                setActive(button);
+                activeCategory = (button.getAttribute('data-filter') || 'ALL').toUpperCase();
+                applyFilter();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                activeKeyword = (searchInput.value || '').trim().toUpperCase();
+                applyFilter();
+            });
+        }
+    });
+</script>
+
+@if (isCustomer)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.ajax-cart-form').forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const btn = form.querySelector('button[type="submit"]');
+                    btn.classList.add('adding');
+
+                    const formData = new FormData(form);
+                    fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData
+                    })
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (typeof showAjaxToast === 'function') {
+                            showAjaxToast(data.message);
+                        }
+                        if (data.success && typeof updateCartBadge === 'function') {
+                            updateCartBadge(data.totalQty);
+                        }
+                    })
+                    .catch(function () {
+                        if (typeof showAjaxToast === 'function') {
+                            showAjaxToast('เกิดข้อผิดพลาด กรุณาลองใหม่');
+                        }
+                    })
+                    .finally(function () {
+                        btn.classList.remove('adding');
+                    });
+                });
+            });
+        });
+    </script>
+}

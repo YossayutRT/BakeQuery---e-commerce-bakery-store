@@ -1,0 +1,426 @@
+﻿@model _66033872_Yossayut_rutatip.ViewModels.AccountManagementViewModel
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "Account Management";
+    var isManager = User.IsInRole("MANAGER");
+    var currentUserIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var hasCurrentUserId = ulong.TryParse(currentUserIdClaim, out var currentUserId);
+    var managerRoleId = Model.RoleList.FirstOrDefault(r => r.RoleName.ToUpper() == "MANAGER")?.RoleId ?? (byte)0;
+    var canChangeOwnManagerRole = Model.ManagerCount > 1;
+    var toastType = TempData["AccountToastType"]?.ToString() ?? string.Empty;
+    var toastMessage = TempData["AccountToastMessage"]?.ToString() ?? string.Empty;
+}
+
+<link rel="stylesheet" href="~/css/AccountManagement.css" />
+<link rel="stylesheet" href="~/css/BackOfficeOrderTheme.css" />
+
+<section class="account-management-section bo-theme">
+    <div class="account-header">
+        <h1>Account Management</h1>
+        @if (isManager)
+        {
+            <button class="btn-create-account" data-bs-toggle="modal" data-bs-target="#addAccountModal">+ Create Account</button>
+        }
+    </div>
+
+    <div class="stats-bar p-3 mb-3">
+        <form method="get" asp-controller="BackOffice" asp-action="AccountManagement" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="filter-label">Role</label>
+                <select class="form-select" name="roleId">
+                    <option value="">All Roles</option>
+                    @foreach (var role in Model.RoleList)
+                    {
+                        if (Model.SelectedRoleId.HasValue && Model.SelectedRoleId.Value == role.RoleId)
+                        {
+                            <option value="@role.RoleId" selected>@role.RoleName</option>
+                        }
+                        else
+                        {
+                            <option value="@role.RoleId">@role.RoleName</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="filter-label">Sort</label>
+                <select class="form-select" name="sortBy">
+                    @if (Model.SortBy == "newest") { <option value="newest" selected>Newest</option> } else { <option value="newest">Newest</option> }
+                    @if (Model.SortBy == "oldest") { <option value="oldest" selected>Oldest</option> } else { <option value="oldest">Oldest</option> }
+                    @if (Model.SortBy == "name_asc") { <option value="name_asc" selected>Name A-Z</option> } else { <option value="name_asc">Name A-Z</option> }
+                    @if (Model.SortBy == "name_desc") { <option value="name_desc" selected>Name Z-A</option> } else { <option value="name_desc">Name Z-A</option> }
+                    @if (Model.SortBy == "role_asc") { <option value="role_asc" selected>Role A-Z</option> } else { <option value="role_asc">Role A-Z</option> }
+                    @if (Model.SortBy == "role_desc") { <option value="role_desc" selected>Role Z-A</option> } else { <option value="role_desc">Role Z-A</option> }
+                </select>
+            </div>
+            <div class="col-md-4 ms-auto">
+                <label class="filter-label">Search</label>
+                <input type="text" class="form-control" name="keyword" value="@Model.Keyword" placeholder="Name, Email, User Code" />
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+                <a asp-controller="BackOffice" asp-action="AccountManagement" class="btn btn-secondary w-100">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-bar">
+        <div class="d-flex flex-wrap align-items-center" style="gap:10px 12px;">
+            <div class="total-pill">
+                Total User : <strong>@Model.UserList.Count</strong>
+            </div>
+            <span class="badge rounded-pill text-bg-light border" style="padding:7px 12px; color:#5a4a39 !important;">Manager : <strong>@Model.ManagerCount</strong></span>
+            <span class="badge rounded-pill text-bg-light border" style="padding:7px 12px; color:#5a4a39 !important;">Admin : <strong>@Model.AdminCount</strong></span>
+            <span class="badge rounded-pill text-bg-light border" style="padding:7px 12px; color:#5a4a39 !important;">Staff : <strong>@Model.StaffCount</strong></span>
+            <span class="badge rounded-pill text-bg-light border" style="padding:7px 12px; color:#5a4a39 !important;">Customer : <strong>@Model.CustomerCount</strong></span>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="account-table">
+            <thead>
+                <tr>
+                    <th>UID</th>
+                    <th>User Code</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.UserList.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" style="text-align:center;">No user data</td>
+                    </tr>
+                }
+                else
+                {
+                    @for (var i = 0; i < Model.UserList.Count; i++)
+                    {
+                        var item = Model.UserList[i];
+                        var isSelfAccount = hasCurrentUserId && item.UserId == currentUserId;
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>@item.UserCode</td>
+                            <td>@item.FullName</td>
+                            <td>@item.Email</td>
+                            <td>@item.Phone</td>
+                            <td>@item.RoleName</td>
+                            <td class="text-center">
+                                @if (item.Status == "ACTIVE")
+                                {
+                                    <span class="status-badge status-active">ACTIVE</span>
+                                }
+                                else if (item.Status == "INACTIVE")
+                                {
+                                    <span class="status-badge status-out-stock">INACTIVE</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-banned">@item.Status</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    @if (isManager)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editAccountModal"
+                                                data-user-id="@item.UserId"
+                                                data-user-code="@item.UserCode"
+                                                data-full-name="@item.FullName"
+                                                data-email="@item.Email"
+                                                data-phone="@item.Phone"
+                                                data-role-id="@item.RoleId"
+                                                data-status="@item.Status">
+                                            Edit
+                                        </button>
+                                        @if (isSelfAccount)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="ไม่สามารถลบบัญชีตัวเองได้">
+                                                Delete
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               asp-controller="BackOffice"
+                                               asp-action="DeleteAccount"
+                                               asp-route-userId="@item.UserId"
+                                               onclick="return confirm('ยืนยันการลบผู้ใช้นี้ใช่ไหม?');">
+                                                Delete
+                                            </a>
+                                        }
+                                    }
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#resetPasswordModal"
+                                            data-user-id="@item.UserId"
+                                            data-full-name="@item.FullName"
+                                            data-email="@item.Email">
+                                        Reset Password
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade bo-theme" id="addAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAccountForm" asp-controller="BackOffice" asp-action="AccountManagement" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" asp-for="AccountForm.FullName" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" asp-for="AccountForm.Email" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" asp-for="AccountForm.Phone" maxlength="10" inputmode="numeric" pattern="[0-9]{1,10}" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" asp-for="AccountForm.Password" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" asp-for="AccountForm.RoleId" required>
+                                @foreach (var role in Model.RoleList)
+                                {
+                                    <option value="@role.RoleId">@role.RoleName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" asp-for="AccountForm.Status">
+                                <option value="ACTIVE">ACTIVE</option>
+                                <option value="INACTIVE">INACTIVE</option>
+                                <option value="BANNED">BANNED</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addAccountForm">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade bo-theme" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm" asp-controller="BackOffice" asp-action="ChangeAccountPassword" method="post">
+                    <input type="hidden" name="userId" id="resetPasswordUserId" />
+
+                    <div class="mb-2 text-muted small">บัญชีเป้าหมาย</div>
+                    <div class="mb-3 p-2 rounded" style="background:#f7f3ec; border:1px solid #eadfce;">
+                        <div id="resetPasswordName" class="fw-semibold"></div>
+                        <div id="resetPasswordEmail" class="small text-muted"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">New Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="newPassword" minlength="6" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control" name="confirmPassword" minlength="6" required />
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-warning" form="resetPasswordForm">Update Password</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(toastMessage))
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+        <div id="accountToast" class="toast align-items-center text-bg-@(string.IsNullOrWhiteSpace(toastType) ? "dark" : toastType) border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">@toastMessage</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade bo-theme" id="editAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAccountForm" asp-controller="BackOffice" asp-action="UpdateAccount" method="post">
+                    <input type="hidden" asp-for="EditAccountForm.UserId" id="editAccountUserId" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">User Code</label>
+                            <input type="text" class="form-control" id="editAccountUserCode" readonly />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" asp-for="EditAccountForm.FullName" id="editAccountFullName" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" asp-for="EditAccountForm.Email" id="editAccountEmail" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" asp-for="EditAccountForm.Phone" id="editAccountPhone" maxlength="10" inputmode="numeric" pattern="[0-9]{1,10}" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" asp-for="EditAccountForm.RoleId" id="editAccountRoleId" required>
+                                @foreach (var role in Model.RoleList)
+                                {
+                                    <option value="@role.RoleId">@role.RoleName</option>
+                                }
+                            </select>
+                            <input type="hidden" id="editAccountRoleIdHidden" name="EditAccountForm.RoleId" disabled />
+                            <div id="editAccountRoleLockedHint" class="form-text text-danger d-none">
+                                ไม่สามารถเปลี่ยน Role ของตัวเองได้จนกว่าจะมี Manager คนอื่นอย่างน้อย 1 บัญชี
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" asp-for="EditAccountForm.Status" id="editAccountStatus">
+                                <option value="ACTIVE">ACTIVE</option>
+                                <option value="INACTIVE">INACTIVE</option>
+                                <option value="BANNED">BANNED</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="editAccountForm">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const modalElement = document.getElementById("addAccountModal");
+        const editModalElement = document.getElementById("editAccountModal");
+        const resetPasswordModalElement = document.getElementById("resetPasswordModal");
+        const currentUserId = @((hasCurrentUserId ? currentUserId : 0UL));
+        const hasCurrentUserId = @(hasCurrentUserId.ToString().ToLowerInvariant());
+        const managerRoleId = @managerRoleId;
+        const canChangeOwnManagerRole = @(canChangeOwnManagerRole.ToString().ToLowerInvariant());
+        if (!modalElement) {
+            return;
+        }
+
+        // Cleanup in case a previous modal session left a stale backdrop.
+        const cleanupBackdrop = () => {
+            document.body.classList.remove("modal-open");
+            document.body.style.removeProperty("padding-right");
+            document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+        };
+
+        cleanupBackdrop();
+        modalElement.addEventListener("hidden.bs.modal", cleanupBackdrop);
+
+        if (editModalElement) {
+            editModalElement.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+                if (!button) {
+                    return;
+                }
+
+                document.getElementById("editAccountUserId").value = button.getAttribute("data-user-id") || "";
+                document.getElementById("editAccountUserCode").value = button.getAttribute("data-user-code") || "";
+                document.getElementById("editAccountFullName").value = button.getAttribute("data-full-name") || "";
+                document.getElementById("editAccountEmail").value = button.getAttribute("data-email") || "";
+                document.getElementById("editAccountPhone").value = button.getAttribute("data-phone") || "";
+                const editRoleSelect = document.getElementById("editAccountRoleId");
+                const editRoleHidden = document.getElementById("editAccountRoleIdHidden");
+                const roleLockedHint = document.getElementById("editAccountRoleLockedHint");
+                const selectedRoleId = button.getAttribute("data-role-id") || "";
+                editRoleSelect.value = selectedRoleId;
+                document.getElementById("editAccountStatus").value = button.getAttribute("data-status") || "ACTIVE";
+
+                const selectedUserId = Number(button.getAttribute("data-user-id") || "0");
+                const isSelfAccount = hasCurrentUserId && selectedUserId === currentUserId;
+                const isManagerRole = Number(selectedRoleId || "0") === Number(managerRoleId);
+                const shouldLockRole = isSelfAccount && isManagerRole && !canChangeOwnManagerRole;
+
+                if (shouldLockRole) {
+                    editRoleSelect.value = String(managerRoleId);
+                    editRoleSelect.disabled = true;
+                    editRoleHidden.value = String(managerRoleId);
+                    editRoleHidden.disabled = false;
+                    roleLockedHint.classList.remove("d-none");
+                } else {
+                    editRoleSelect.disabled = false;
+                    editRoleHidden.disabled = true;
+                    roleLockedHint.classList.add("d-none");
+                }
+            });
+
+            editModalElement.addEventListener("hidden.bs.modal", cleanupBackdrop);
+        }
+
+        if (resetPasswordModalElement) {
+            resetPasswordModalElement.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+                if (!button) {
+                    return;
+                }
+
+                document.getElementById("resetPasswordUserId").value = button.getAttribute("data-user-id") || "";
+                document.getElementById("resetPasswordName").textContent = button.getAttribute("data-full-name") || "";
+                document.getElementById("resetPasswordEmail").textContent = button.getAttribute("data-email") || "";
+            });
+
+            resetPasswordModalElement.addEventListener("hidden.bs.modal", cleanupBackdrop);
+        }
+
+        const accountToastElement = document.getElementById("accountToast");
+        if (accountToastElement && window.bootstrap) {
+            const toast = new bootstrap.Toast(accountToastElement, { delay: 2400 });
+            toast.show();
+        }
+    });
+</script>

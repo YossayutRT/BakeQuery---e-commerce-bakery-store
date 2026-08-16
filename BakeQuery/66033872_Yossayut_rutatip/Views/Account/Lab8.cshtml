@@ -1,0 +1,42 @@
+@model IEnumerable<_66033872_Yossayut_rutatip.Models.db.User>
+
+@{
+   Layout = "_PublicLayout";
+}
+
+<h2>User List (Lab08)</h2>
+
+@if (Model == null || !Model.Any())
+{
+   <p>ไม่พบข้อมูลผู้ใช้</p>
+}
+else
+{
+   <table class="table table-bordered table-striped">
+      <thead>
+         <tr>
+            <th>User ID</th>
+            <th>User Code</th>
+            <th>Role</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+         </tr>
+      </thead>
+      <tbody>
+         @foreach (var user in Model)
+         {
+            <tr>
+               <td>@user.UserId</td>
+               <td>@user.UserCode</td>
+               <td>@user.RoleId</td>
+               <td>@user.FullName</td>
+               <td>@user.Email</td>
+               <td>@(string.IsNullOrWhiteSpace(user.Phone) ? "-" : user.Phone)</td>
+               <td>@user.Status</td>
+            </tr>
+         }
+      </tbody>
+   </table>
+}

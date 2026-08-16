@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@model _66033872_Yossayut_rutatip.ViewModels.HomeIndexViewModel
+
+<div class="text-center">
+    @if (ViewBag.WelcomeMessage != null)
+    {
+        <h2>@ViewBag.WelcomeMessage</h2>
+    }
+    <h1 class="display-4"> @ViewBag.fullName</h1>
+    <p>รหัสนักศึกษา: @ViewBag.studentId</p>
+    <p>ห้อง(section) : @ViewBag.section</p>
+    <p>ชั้นปี : @ViewBag.Years</p>
+    <p>ภาษาที่ถนัด : @ViewBag.Language</p>
+    <p>คะแนนเก็บทั้ง 10 ครั้ง : @ViewBag.score1, @ViewBag.score2, @ViewBag.score3, @ViewBag.score4, @ViewBag.score5, @ViewBag.score6, @ViewBag.score7, @ViewBag.score8, @ViewBag.score9, @ViewBag.score10</p>
+    <p>คะแนนรวมของงาน 10 ครั้ง : @ViewBag.sum</p>
+    <p>เกรดที่ได้ : @ViewBag.grade</p>
+</div>
+
+<div class="container mt-4">
+    <h3>เมนูยอดฮิต (อิงจากจำนวนชิ้นที่ขาย)</h3>
+    <div class="row g-3 mb-4">
+        @if (Model.TopSellingProducts.Count == 0)
+        {
+            <div class="col-12">
+                <div class="alert alert-secondary mb-0">ยังไม่มีข้อมูลยอดขายสำหรับแสดงเมนูยอดฮิต</div>
+            </div>
+        }
+        else
+        {
+            @for (var i = 0; i < Model.TopSellingProducts.Count; i++)
+            {
+                var top = Model.TopSellingProducts[i];
+                <div class="col-lg-3 col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-dark">อันดับ #@(i + 1)</span>
+                                <span class="badge bg-success">@top.QuantitySold ชิ้น</span>
+                            </div>
+                            <h5 class="card-title mb-1">@top.ProductName</h5>
+                            <p class="text-muted mb-0">รายได้จากสินค้านี้ ฿@top.Revenue.ToString("N2")</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <h3>Products From Database</h3>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Products)
+            {
+                <tr>
+                    <td>@item.ProductCode</td>
+                    <td>@item.Name</td>
+                    <td>@item.Category.Name</td>
+                    <td>฿@item.Price.ToString("N2")</td>
+                    <td>@item.StockQty</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

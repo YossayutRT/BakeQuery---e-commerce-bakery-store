@@ -1,0 +1,1170 @@
+@model _66033872_Yossayut_rutatip.ViewModels.CustomerOrderHistoryViewModel
+
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "My Orders";
+
+    Func<string, string> statusClass = status => status.ToUpperInvariant() switch
+    {
+        "PENDING" => "status pending",
+        "PAID" => "status paid",
+        "PREPARING" => "status preparing",
+        "SHIPPING" => "status shipping",
+        "DELIVERED" => "status delivered",
+        "CANCELLED" => "status cancelled",
+        _ => "status"
+    };
+
+    Func<string, int> stepIndex = status => (status ?? string.Empty).Trim().ToUpperInvariant() switch
+    {
+        "PENDING" => 1,
+        "PAID" => 2,
+        "PREPARING" => 3,
+        "SHIPPING" => 4,
+        "DELIVERED" => 4,
+        _ => 1
+    };
+
+    Func<string, int, string> stepState = (status, step) =>
+    {
+        var normalized = (status ?? string.Empty).Trim().ToUpperInvariant();
+        if (normalized == "CANCELLED")
+        {
+            return "cancelled";
+        }
+
+        var activeStep = stepIndex(normalized);
+        if (step < activeStep)
+        {
+            return "completed";
+        }
+
+        if (step == activeStep)
+        {
+            if (normalized == "DELIVERED" && step == 4)
+            {
+                return "completed";
+            }
+
+            return "in-progress";
+        }
+
+        return "pending";
+    };
+
+    Func<string, string> stepBadgeText = step => step switch
+    {
+        "completed" => "Completed",
+        "in-progress" => "In Progress",
+        "cancelled" => "Cancelled",
+        _ => "Pending"
+    };
+
+    Func<int, string> stepBaseIcon = step => step switch
+    {
+        1 => "fa-credit-card",
+        2 => "fa-clipboard-check",
+        3 => "fa-kitchen-set",
+        4 => "fa-truck-fast",
+        _ => "fa-circle"
+    };
+}
+
+<section class="orders-shell orders-theme container py-4 py-lg-5">
+    <div class="orders-hero mb-4">
+        <h2 class="orders-title">My Orders</h2>
+        <p class="orders-subtitle mb-0">รายการที่จบแล้วจะย้ายไปหน้า Order History อัตโนมัติ</p>
+        <a asp-controller="PublicPage" asp-action="OrderHistory" class="btn btn-sm btn-outline-dark mt-2">ดู Order History</a>
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="empty-state card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <h4 class="mb-2">ยังไม่มีประวัติคำสั่งซื้อ</h4>
+                <p class="text-muted">ตอนนี้ยังไม่มีออเดอร์ที่กำลังดำเนินการ ลองดูรายการที่จบแล้วในหน้า Order History</p>
+                <a asp-controller="PublicPage" asp-action="OrderHistory" class="btn btn-outline-dark rounded-pill px-4 mb-2">ไป Order History</a>
+                <br />
+                <a asp-controller="PublicPage" asp-action="Menu" class="btn btn-dark rounded-pill px-4">ไปเลือกสินค้า</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="vstack gap-3">
+            @foreach (var order in Model.Orders)
+            {
+                var normalizedStatus = (order.OrderStatus ?? string.Empty).Trim().ToUpperInvariant();
+                var normalizedPaymentStatus = (order.PaymentStatus ?? string.Empty).Trim().ToUpperInvariant();
+                var isPaymentPaid = normalizedPaymentStatus == "PAID";
+                var isCancelled = normalizedStatus == "CANCELLED";
+                var canConfirmReceived = normalizedStatus == "SHIPPING";
+                var canCancelOrder = normalizedStatus == "PENDING" || normalizedStatus == "PAID" || normalizedStatus == "PREPARING";
+                var step1 = stepState(normalizedStatus, 1);
+                var step2 = stepState(normalizedStatus, 2);
+                var step3 = stepState(normalizedStatus, 3);
+                var step4 = stepState(normalizedStatus, 4);
+
+                <article class="order-card card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                            <div>
+                                <div class="order-no">@order.OrderNo</div>
+                                <div class="order-time">@order.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                            </div>
+                            <div class="text-end order-status-stack">
+                                <span class="@statusClass(order.OrderStatus ?? string.Empty)">@order.OrderStatus</span>
+                                <div class="payment-status">Payment: @order.PaymentStatus</div>
+                            </div>
+                        </div>
+
+                        <div class="order-stepper mb-3">
+                            <div class="step-item step-@step1" data-step="1">
+                                <div class="step-circle" data-step="1">
+                                    @if (step1 == "completed")
+                                    {
+                                        <i class="fa-solid fa-check"></i>
+                                    }
+                                    else if (step1 == "in-progress")
+                                    {
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    }
+                                    else if (step1 == "cancelled")
+                                    {
+                                        <i class="fa-solid fa-xmark"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid @stepBaseIcon(1)"></i>
+                                    }
+                                </div>
+                                <div class="step-text">Step 1</div>
+                                <div class="step-title">ชำระเงิน</div>
+                                <div class="step-badge">@stepBadgeText(step1)</div>
+                            </div>
+
+                            <div class="step-item step-@step2" data-step="2">
+                                <div class="step-circle" data-step="2">
+                                    @if (step2 == "completed")
+                                    {
+                                        <i class="fa-solid fa-check"></i>
+                                    }
+                                    else if (step2 == "in-progress")
+                                    {
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    }
+                                    else if (step2 == "cancelled")
+                                    {
+                                        <i class="fa-solid fa-xmark"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid @stepBaseIcon(2)"></i>
+                                    }
+                                </div>
+                                <div class="step-text">Step 2</div>
+                                <div class="step-title">ตรวจสอบออเดอร์</div>
+                                <div class="step-badge">@stepBadgeText(step2)</div>
+                            </div>
+
+                            <div class="step-item step-@step3" data-step="3">
+                                <div class="step-circle" data-step="3">
+                                    @if (step3 == "completed")
+                                    {
+                                        <i class="fa-solid fa-check"></i>
+                                    }
+                                    else if (step3 == "in-progress")
+                                    {
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    }
+                                    else if (step3 == "cancelled")
+                                    {
+                                        <i class="fa-solid fa-xmark"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid @stepBaseIcon(3)"></i>
+                                    }
+                                </div>
+                                <div class="step-text">Step 3</div>
+                                <div class="step-title">เตรียมออเดอร์</div>
+                                <div class="step-badge">@stepBadgeText(step3)</div>
+                            </div>
+
+                            <div class="step-item step-@step4" data-step="4">
+                                <div class="step-circle" data-step="4">
+                                    @if (step4 == "completed")
+                                    {
+                                        <i class="fa-solid fa-check"></i>
+                                    }
+                                    else if (step4 == "in-progress")
+                                    {
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    }
+                                    else if (step4 == "cancelled")
+                                    {
+                                        <i class="fa-solid fa-xmark"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-solid @stepBaseIcon(4)"></i>
+                                    }
+                                </div>
+                                <div class="step-text">Step 4</div>
+                                <div class="step-title">จัดส่ง</div>
+                                <div class="step-badge">@stepBadgeText(step4)</div>
+                            </div>
+                        </div>
+
+                        @if (isCancelled)
+                        {
+                            <div class="order-cancelled-note mb-3">ออเดอร์นี้ถูกยกเลิกแล้ว</div>
+                        }
+
+                        <div class="order-items mb-3">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="item-row">@item</div>
+                            }
+                        </div>
+
+                        <div class="order-actions mb-3">
+                            <div class="order-total">ยอดรวม: ฿@order.GrandTotal.ToString("N2")</div>
+                            <div class="order-action-buttons">
+                                @if (canConfirmReceived)
+                                {
+                                    <form asp-controller="PublicPage" asp-action="ConfirmReceived" method="post" class="m-0" onsubmit="return confirm('ยืนยันว่าคุณได้รับสินค้าเรียบร้อยแล้ว?');">
+                                        <input type="hidden" name="orderId" value="@order.OrderId" />
+                                        <button type="submit" class="btn btn-confirm-received">
+                                            <i class="fa-solid fa-circle-check me-1"></i>กดรับสินค้า
+                                        </button>
+                                    </form>
+                                }
+
+                                @if (canCancelOrder)
+                                {
+                                    <button type="button"
+                                            class="btn btn-cancel-order-trigger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#cancelOrderModal"
+                                            data-order-id="@order.OrderId"
+                                            data-order-no="@order.OrderNo">
+                                        <i class="fa-solid fa-ban me-1"></i>ยกเลิกออเดอร์
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="proof-box mb-3">
+                            <div class="section-label mb-2">หลักฐานการชำระเงิน</div>
+
+                            @if (!isPaymentPaid)
+                            {
+                                <div class="payment-qr-box mb-3">
+                                    <div class="payment-qr-title">สแกน QR เพื่อชำระเงิน</div>
+                                    <img src="~/Image/QR BakeQuery.jpg" alt="BakeQuery QR Payment" class="payment-qr-image" />
+                                </div>
+                            }
+
+                            @if (order.PaymentProofs.Count == 0)
+                            {
+                                <div class="text-muted small mb-2">ยังไม่มีการแนบหลักฐาน</div>
+                            }
+                            else
+                            {
+                                @foreach (var proof in order.PaymentProofs)
+                                {
+                                    <div class="proof-item">
+                                        <div class="d-flex justify-content-between flex-wrap gap-2">
+                                            <a href="@proof.FilePath" target="_blank" class="fw-semibold">@proof.OriginalFileName</a>
+                                            <span class="proof-status">@proof.VerificationStatus</span>
+                                        </div>
+                                        <div class="text-muted small">@proof.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        @if (!string.IsNullOrWhiteSpace(proof.UploadNote))
+                                        {
+                                            <div class="small mt-1">@proof.UploadNote</div>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (!isPaymentPaid)
+                            {
+                                <form asp-controller="PublicPage" asp-action="UploadPaymentProof" method="post" enctype="multipart/form-data" class="mt-2">
+                                    <input type="hidden" name="orderId" value="@order.OrderId" />
+                                    <div class="mb-2">
+                                        <input type="file" name="paymentSlip" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.pdf" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <textarea name="uploadNote" rows="2" class="form-control form-control-sm" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-dark">อัปโหลดหลักฐานการชำระเงิน</button>
+                                </form>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(order.CustomerNote))
+                        {
+                            <div class="customer-note mb-3">
+                                <div class="section-label">หมายเหตุที่ส่งถึงร้าน</div>
+                                <div>@order.CustomerNote</div>
+                            </div>
+                        }
+
+                        <div class="reply-box">
+                            <div class="section-label mb-2">ข้อความตอบกลับจากทีมงาน</div>
+                            @if (order.Replies.Count == 0)
+                            {
+                                <div class="text-muted small">ยังไม่มีข้อความตอบกลับ</div>
+                            }
+                            else
+                            {
+                                @foreach (var reply in order.Replies)
+                                {
+                                    <div class="reply-item">
+                                        <div class="d-flex justify-content-between flex-wrap gap-1">
+                                            <div class="fw-semibold">@reply.RepliedBy</div>
+                                            <div class="text-muted small">@reply.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </div>
+                                        <div class="reply-text">@reply.Message</div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content cancel-modal-content">
+                    <form asp-controller="PublicPage" asp-action="CancelOrder" method="post" id="cancelOrderForm">
+                        <div class="modal-header cancel-modal-header">
+                            <h5 class="modal-title" id="cancelOrderModalLabel">ยกเลิกออเดอร์</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body cancel-modal-body">
+                            <p class="cancel-modal-subtitle mb-2" id="cancelOrderTargetText">เลือกรายการที่ต้องการยกเลิก</p>
+                            <input type="hidden" name="orderId" id="cancelOrderIdInput" />
+                            <input type="hidden" name="cancelReason" id="cancelReasonInput" />
+
+                            <div class="cancel-reason-group" role="radiogroup" aria-label="เหตุผลการยกเลิก">
+                                <label class="cancel-reason-item">
+                                    <input type="radio" name="cancelReasonPreset" value="ไม่ประสงค์รับสินค้าแล้ว  " required>
+                                    <span>ไม่ประสงค์รับสินค้าแล้ว</span>
+                                </label>
+                                <label class="cancel-reason-item">
+                                    <input type="radio" name="cancelReasonPreset" value="ต้องการแก้ไขรายการสินค้า" required>
+                                    <span>ต้องการแก้ไขรายการสินค้า</span>
+                                </label>
+                                <label class="cancel-reason-item">
+                                    <input type="radio" name="cancelReasonPreset" value="เวลาในการรับสินค้าไม่สะดวก" required>
+                                    <span>เวลาในการรับสินค้าไม่สะดวก</span>
+                                </label>
+                                <label class="cancel-reason-item">
+                                    <input type="radio" name="cancelReasonPreset" value="OTHER" required>
+                                    <span>อื่นๆ</span>
+                                </label>
+                            </div>
+
+                            <div class="mt-2" id="cancelOtherReasonWrap" style="display:none;">
+                                <textarea id="cancelOtherReasonText"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="500"
+                                          placeholder="โปรดระบุเหตุผลเพิ่มเติม"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer cancel-modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="submit" class="btn btn-cancel-order-submit">ยืนยันยกเลิกออเดอร์</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</section>
+
+<style>
+    .orders-theme {
+        --bg-1: #fbf6ef;
+        --bg-2: #f2e7da;
+        --ink: #2a1f14;
+        --muted: #7f6b55;
+        --card: #fffdfa;
+        --line: #ecdecc;
+        --accent: #8b5e34;
+        --accent-2: #c89245;
+        --ok: #23b486;
+        --progress: #2f8dff;
+        --pending: #a2acbb;
+        --danger: #d35f5f;
+        font-family: 'Noto Sans Thai', sans-serif;
+        max-width: 1060px;
+        position: relative;
+    }
+
+    .orders-theme::before,
+    .orders-theme::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        z-index: -1;
+        filter: blur(10px);
+        opacity: 0.55;
+    }
+
+    .orders-theme::before {
+        width: 240px;
+        height: 240px;
+        top: 8px;
+        left: -30px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffe8c8 0%, rgba(255, 232, 200, 0) 72%);
+    }
+
+    .orders-theme::after {
+        width: 280px;
+        height: 280px;
+        bottom: 18px;
+        right: -48px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #f9dcc2 0%, rgba(249, 220, 194, 0) 72%);
+    }
+
+    .orders-hero {
+        padding: 28px 30px;
+        border-radius: 20px;
+        background: linear-gradient(130deg, var(--bg-1) 0%, var(--bg-2) 100%);
+        border: 1px solid #e7d6c2;
+        box-shadow: 0 14px 30px rgba(101, 69, 35, 0.12);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .orders-hero::after {
+        content: "";
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        right: -72px;
+        top: -92px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(232, 189, 129, 0.55) 0%, rgba(232, 189, 129, 0) 72%);
+    }
+
+    .orders-title {
+        margin-bottom: 6px;
+        color: var(--ink);
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 3.3vw, 2.7rem);
+        line-height: 1;
+        letter-spacing: 0.2px;
+        font-weight: 700;
+    }
+
+    .orders-subtitle {
+        color: var(--muted);
+        font-weight: 500;
+        max-width: 620px;
+    }
+
+    .orders-hero .btn {
+        border-radius: 999px;
+        border-color: #6a4a2b;
+        color: #6a4a2b;
+        font-weight: 700;
+        padding: 0.42rem 0.95rem;
+    }
+
+    .orders-hero .btn:hover {
+        background: #6a4a2b;
+        color: #fff8ec;
+    }
+
+    .order-card {
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fffcf8 0%, #fff 100%);
+        border: 1px solid #ebdcc9;
+        box-shadow: 0 10px 26px rgba(80, 54, 28, 0.1);
+        transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+        animation: orderFadeIn 0.5s ease both;
+    }
+
+    .order-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 34px rgba(80, 54, 28, 0.16);
+        border-color: #dfc6a7;
+    }
+
+    @@keyframes orderFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .order-no {
+        font-size: 1.08rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        color: var(--ink);
+    }
+
+    .order-time {
+        font-size: 0.85rem;
+        color: #8d7a67;
+        font-weight: 500;
+    }
+
+    .order-status-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+
+    .status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        padding: 5px 11px;
+        border: 1px solid transparent;
+    }
+
+    .status.pending { color: #946623; background: #fff2d9; border-color: #f2d7a8; }
+    .status.paid { color: #1f5f99; background: #e6f1ff; border-color: #bfd9f8; }
+    .status.preparing { color: #866315; background: #fff4de; border-color: #f0d8a9; }
+    .status.shipping { color: #185f45; background: #e8f9f1; border-color: #bfe8d2; }
+    .status.delivered { color: #0c5d44; background: #dcf5eb; border-color: #afe5ce; }
+    .status.cancelled { color: #a94242; background: #fce9e9; border-color: #eebcbc; }
+
+    .payment-status {
+        font-size: 0.77rem;
+        color: #927e67;
+        font-weight: 600;
+    }
+
+    .order-stepper {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 18px 14px 14px;
+        border-radius: 18px;
+        background: linear-gradient(145deg, #fff9f1 0%, #f9f0e5 100%);
+        border: 1px solid #e9d8c1;
+    }
+
+    .step-item {
+        position: relative;
+        min-width: 0;
+        text-align: center;
+        padding: 0 6px;
+    }
+
+    .step-item:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 21px;
+        left: calc(50% + 26px);
+        width: calc(100% - 52px);
+        height: 0;
+        border-radius: 999px;
+        border-top: 3px dotted #d9c8b1;
+    }
+
+    .step-item.step-completed:not(:last-child)::after,
+    .step-item.step-in-progress:not(:last-child)::after {
+        border-top-color: #bc8651;
+    }
+
+    .step-circle {
+        width: 54px;
+        height: 54px;
+        border-radius: 16px;
+        border: 2px solid #d8c4a8;
+        background: #fffdf9;
+        position: relative;
+        z-index: 1;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .step-circle::before {
+        display: none;
+    }
+
+    .step-circle i {
+        font-size: 1.12rem;
+        color: #96683a;
+        transition: transform 0.25s ease, color 0.25s ease;
+    }
+
+    .step-item:hover .step-circle i {
+        transform: scale(1.08);
+    }
+
+    .step-item.step-completed .step-circle {
+        border-color: #b97f45;
+        background: linear-gradient(135deg, #c98d4f 0%, #b67b41 100%);
+        box-shadow: 0 8px 18px rgba(151, 95, 44, 0.28);
+    }
+
+    .step-item.step-completed .step-circle i {
+        color: #fff;
+    }
+
+    .step-item.step-in-progress .step-circle {
+        border-color: #9d6e43;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(157, 110, 67, 0.16);
+        animation: pulseRing 1.8s ease-in-out infinite;
+    }
+
+    .step-item.step-in-progress .step-circle i {
+        color: #8b5e34;
+    }
+
+    .step-item.step-in-progress .step-title {
+        color: #7c4f22;
+    }
+
+    .step-item.step-pending .step-circle {
+        border-color: #dfd4c5;
+        background: #f8f4ee;
+    }
+
+    .step-item.step-pending .step-circle i {
+        color: #b4a18c;
+    }
+
+    .step-item.step-cancelled .step-circle {
+        border-color: #dda0a0;
+        background: #fdf1f1;
+    }
+
+    .step-item.step-cancelled .step-circle i {
+        color: #be4c4c;
+    }
+
+    .step-text {
+        margin-top: 8px;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #9f8c78;
+        font-weight: 700;
+    }
+
+    .step-title {
+        margin-top: 2px;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #5a3f24;
+        line-height: 1.2;
+    }
+
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 7px;
+        border-radius: 999px;
+        padding: 3px 11px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        border: 1px solid transparent;
+    }
+
+    .step-item.step-completed .step-badge {
+        background: #f3e2cd;
+        color: #7e5226;
+    }
+
+    .step-item.step-in-progress .step-badge {
+        background: #f4e6d8;
+        color: #7f5327;
+        border-color: #ddbf9c;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .step-item.step-in-progress .step-badge::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -120%;
+        width: 120%;
+        height: 100%;
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%);
+        animation: badgeShine 1.6s ease-in-out infinite;
+    }
+
+    .step-item.step-pending .step-badge {
+        background: #f6f0e8;
+        color: #9a8a77;
+        border-color: #e3d7ca;
+    }
+
+    .step-item.step-cancelled .step-badge {
+        background: #fdeaea;
+        color: #ba4b4b;
+        border-color: #efc3c3;
+    }
+
+    .order-cancelled-note {
+        border: 1px solid #efc6c6;
+        background: linear-gradient(130deg, #fff4f4 0%, #ffecec 100%);
+        color: #9e3f3f;
+        border-radius: 12px;
+        padding: 8px 11px;
+        font-size: 0.84rem;
+        font-weight: 700;
+    }
+
+    .order-items,
+    .proof-box,
+    .reply-box,
+    .customer-note {
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: var(--card);
+    }
+
+    .order-items {
+        padding: 11px 13px;
+    }
+
+    .item-row {
+        color: #4f3e2e;
+        font-weight: 500;
+    }
+
+    .item-row + .item-row {
+        margin-top: 5px;
+        padding-top: 5px;
+        border-top: 1px dashed #eddcc8;
+    }
+
+    .order-total {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: #f7eddf;
+        border: 1px solid #ead3b4;
+        color: #644223;
+        padding: 7px 14px;
+        font-weight: 800;
+    }
+
+    .order-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .order-action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-confirm-received {
+        border: 1px solid #6b4828;
+        background: #7c5430;
+        color: #fffdf9;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.83rem;
+        font-weight: 800;
+        letter-spacing: 0.1px;
+        line-height: 1.2;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-confirm-received:hover {
+        background: #6f4b2a;
+        border-color: #5c3d22;
+        color: #fff;
+        box-shadow: 0 6px 14px rgba(101, 67, 35, 0.24);
+    }
+
+    .btn-confirm-received:active {
+        background: #5f3f23;
+    }
+
+    .btn-confirm-received:focus-visible {
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(165, 119, 74, 0.25);
+    }
+
+    .btn-cancel-order-trigger {
+        border: 1px solid #b85b56;
+        background: #fff;
+        color: #9d3f3a;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 0.81rem;
+        font-weight: 700;
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-cancel-order-trigger:hover {
+        background: #fff1f0;
+        color: #8c312c;
+        border-color: #a94d48;
+    }
+
+    .cancel-modal-content {
+        border-radius: 16px;
+        border: 1px solid #ead9c5;
+        overflow: hidden;
+    }
+
+    .cancel-modal-header {
+        background: linear-gradient(135deg, #fff8f1 0%, #f6ece0 100%);
+        border-bottom: 1px solid #ead9c5;
+    }
+
+    .cancel-modal-header .modal-title {
+        font-weight: 800;
+        color: #56381d;
+    }
+
+    .cancel-modal-subtitle {
+        color: #7d684f;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .cancel-reason-group {
+        display: grid;
+        gap: 8px;
+    }
+
+    .cancel-reason-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 11px;
+        border: 1px solid #e5d6c4;
+        border-radius: 10px;
+        background: #fffdfa;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .cancel-reason-item:has(input:checked) {
+        border-color: #b27b46;
+        background: #fdf2e4;
+    }
+
+    .cancel-reason-item input[type="radio"] {
+        accent-color: #9d6b3a;
+    }
+
+    #cancelOtherReasonText {
+        border-color: #d8c0a3;
+        font-size: 0.88rem;
+    }
+
+    #cancelOtherReasonText:focus {
+        border-color: #b48456;
+        box-shadow: 0 0 0 0.2rem rgba(177, 126, 73, 0.18);
+    }
+
+    .cancel-modal-footer {
+        border-top: 1px solid #efe2d3;
+        background: #fff;
+    }
+
+    .btn-cancel-order-submit {
+        border: 1px solid #b44e49;
+        background: #b85a54;
+        color: #fff;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 7px 14px;
+    }
+
+    .btn-cancel-order-submit:hover {
+        background: #a94d48;
+        border-color: #a34742;
+        color: #fff;
+    }
+
+    .section-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        font-weight: 800;
+        color: #9e7745;
+    }
+
+    .proof-box,
+    .reply-box,
+    .customer-note {
+        padding: 11px 13px;
+    }
+
+    .payment-qr-box {
+        border: 1px solid #ead8c2;
+        background: linear-gradient(135deg, #fffaf2 0%, #fff4e7 100%);
+        border-radius: 12px;
+        padding: 10px;
+        text-align: center;
+    }
+
+    .payment-qr-title {
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #876139;
+        letter-spacing: 0.25px;
+        margin-bottom: 8px;
+    }
+
+    .payment-qr-image {
+        width: min(100%, 270px);
+        border-radius: 10px;
+        border: 1px solid #dfc7a8;
+        background: #fff;
+        padding: 6px;
+        box-shadow: 0 6px 14px rgba(112, 77, 42, 0.12);
+    }
+
+    .proof-item + .proof-item,
+    .reply-item + .reply-item {
+        margin-top: 9px;
+        padding-top: 9px;
+        border-top: 1px dashed #ecd9c3;
+    }
+
+    .proof-status {
+        font-size: 0.7rem;
+        font-weight: 800;
+        border-radius: 999px;
+        background: #f2e6d6;
+        color: #7c5730;
+        padding: 3px 9px;
+    }
+
+    .reply-text {
+        margin-top: 4px;
+        color: #4f3e2d;
+    }
+
+    .empty-state {
+        border-radius: 18px;
+        border: 1px solid #ebdcc9;
+        background: linear-gradient(140deg, #fffaf4 0%, #fff 100%);
+    }
+
+    .empty-state h4 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2rem;
+        color: #3a2a1b;
+        font-weight: 700;
+    }
+
+    @@keyframes pulseRing {
+        0% {
+            box-shadow: 0 0 0 4px rgba(157, 110, 67, 0.16);
+        }
+
+        50% {
+            box-shadow: 0 0 0 8px rgba(157, 110, 67, 0.09);
+        }
+
+        100% {
+            box-shadow: 0 0 0 4px rgba(157, 110, 67, 0.16);
+        }
+    }
+
+    @@keyframes badgeShine {
+        0% {
+            left: -120%;
+        }
+
+        100% {
+            left: 120%;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .orders-hero {
+            padding: 24px 22px;
+        }
+
+        .order-stepper {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px 12px;
+        }
+
+        .step-item:not(:last-child)::after {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .order-card .card-body {
+            padding: 1rem !important;
+        }
+
+        .order-stepper {
+            display: flex;
+            gap: 6px;
+            padding: 12px 10px;
+            overflow: hidden;
+        }
+
+        .step-item {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0 1px;
+        }
+
+        .step-item:not(:last-child)::after {
+            display: block;
+            top: 17px;
+            left: calc(50% + 21px);
+            width: calc(100% - 42px);
+            border-top-width: 2px;
+        }
+
+        .step-circle {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border-width: 1.8px;
+        }
+
+        .step-circle i {
+            font-size: 0.92rem;
+        }
+
+        .step-text {
+            margin-top: 6px;
+            font-size: 0.6rem;
+            letter-spacing: 0.45px;
+        }
+
+        .step-title {
+            margin-top: 1px;
+            font-size: 0.8rem;
+            line-height: 1.25;
+        }
+
+        .step-badge {
+            margin-top: 6px;
+            padding: 2px 8px;
+            font-size: 0.62rem;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .order-status-stack {
+            align-items: flex-start;
+        }
+
+        .order-actions {
+            align-items: stretch;
+        }
+
+        .order-action-buttons {
+            width: 100%;
+        }
+
+        .btn-confirm-received {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-cancel-order-trigger {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const cancelModal = document.getElementById('cancelOrderModal');
+        if (!cancelModal) return;
+
+        const orderIdInput = document.getElementById('cancelOrderIdInput');
+        const reasonInput = document.getElementById('cancelReasonInput');
+        const targetText = document.getElementById('cancelOrderTargetText');
+        const otherWrap = document.getElementById('cancelOtherReasonWrap');
+        const otherText = document.getElementById('cancelOtherReasonText');
+        const cancelForm = document.getElementById('cancelOrderForm');
+
+        cancelModal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+
+            const orderId = trigger.getAttribute('data-order-id') || '';
+            const orderNo = trigger.getAttribute('data-order-no') || '';
+
+            orderIdInput.value = orderId;
+            targetText.textContent = orderNo ? `ออเดอร์ ${orderNo}` : 'เลือกรายการที่ต้องการยกเลิก';
+            reasonInput.value = '';
+
+            cancelForm.querySelectorAll('input[name="cancelReasonPreset"]').forEach(function (item) {
+                item.checked = false;
+            });
+
+            otherText.value = '';
+            otherWrap.style.display = 'none';
+            otherText.required = false;
+        });
+
+        cancelForm.querySelectorAll('input[name="cancelReasonPreset"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                const isOther = radio.value === 'OTHER' && radio.checked;
+                otherWrap.style.display = isOther ? '' : 'none';
+                otherText.required = isOther;
+                if (!isOther) {
+                    otherText.value = '';
+                }
+            });
+        });
+
+        cancelForm.addEventListener('submit', function (event) {
+            const selected = cancelForm.querySelector('input[name="cancelReasonPreset"]:checked');
+            if (!selected) {
+                event.preventDefault();
+                alert('กรุณาเลือกเหตุผลในการยกเลิก');
+                return;
+            }
+
+            if (selected.value === 'OTHER') {
+                const customReason = (otherText.value || '').trim();
+                if (!customReason) {
+                    event.preventDefault();
+                    alert('กรุณาระบุเหตุผลเพิ่มเติม');
+                    otherText.focus();
+                    return;
+                }
+
+                reasonInput.value = customReason;
+                return;
+            }
+
+            reasonInput.value = selected.value;
+        });
+    })();
+</script>

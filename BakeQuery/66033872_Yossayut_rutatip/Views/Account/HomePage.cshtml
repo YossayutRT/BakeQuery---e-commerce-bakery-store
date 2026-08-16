@@ -1,0 +1,437 @@
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Home | BakeQuery";
+}
+@model _66033872_Yossayut_rutatip.ViewModels.AccountHomePageViewModel
+
+@{
+    var isCustomer = User.IsInRole("CUSTOMER");
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<link rel="stylesheet" href="~/css/HomePage.css" />
+<link rel="stylesheet" href="~/css/HomePageOffers.css" />
+<link rel="stylesheet" href="~/css/PromotionGrid.css" />
+<link rel="stylesheet" href="~/css/HomePagePromotions.css" />
+<!-- Bootstrap CSS for Carousel -->
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link
+href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap"
+rel="stylesheet">
+
+<!-- HERO SECTION -->
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="container text-center text-white">
+            <div class="hero-badge animate-fade-in-down" style="animation-delay: 0s;">
+                <span class="since-badge">SINCE 2026</span>
+            </div>
+
+            <h1 class="hero-title animate-fade-in-down" style="animation-delay: 0.2s;">
+                Crafting Happiness<br />
+                <span class="hero-subtitle">One Bite at a Time</span>
+            </h1>
+
+            <p class="hero-description animate-fade-in-down" style="animation-delay: 0.4s;">
+                สัมผัสรสชาติของเบเกอรี่ระดับพรีเมียม<br />
+                ใส่ใจทุกรายละเอียด เพื่อช่วงเวลาพิเศษของคุณ
+            </p>
+        </div>
+    </div>
+</section>
+
+@* Show Data *@
+<section class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-9">
+            <div class="p-4 p-md-5"
+                 style="border-radius:24px; background:linear-gradient(135deg, #fff8f1 0%, #f9efe6 100%); box-shadow:0 24px 60px rgba(28, 20, 12, 0.18); border:1px solid rgba(201, 168, 124, 0.35);">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between"
+                     style="gap:16px;">
+                    <div>
+                        <span class="badge"
+                              style="background:#1f1b16; color:#f8e8d6; padding:8px 14px; border-radius:999px; letter-spacing:1px; font-size:0.75rem;">@(isAuthenticated ? "MEMBER ACCESS" : "GUEST MODE")</span>
+                            <h2 class="mt-3"
+                                style="font-family:'Playfair Display', serif; font-weight:700; color:#1f1b16; font-size:2rem;">
+                                @(isAuthenticated ? "Welcome back" : "Welcome to BakeQuery")</h2>
+                                <p class="mb-0" style="color:#6b5a4a; font-size:1rem;">
+                                    @(isAuthenticated ? (string.IsNullOrWhiteSpace(ViewBag.Email as string) ? (User.Identity?.Name ?? "Member") : ViewBag.Email) : "คุณสามารถดูสินค้าและโปรโมชั่นได้ทันที")
+                                </p>
+                            </div>
+                            <div class="text-md-end" style="min-width:220px;">
+                                <div style="font-size:0.85rem; color:#8b7764; letter-spacing:1px;">@(isAuthenticated ? "SIGNED IN" : "NOT SIGNED IN")</div>
+                                <div style="font-weight:600; color:#1f1b16;">@DateTime.Now.ToString("dd MMM yyyy")</div>
+                            </div>
+                        </div>
+                        <div class="mt-4"
+                             style="height:1px; background:linear-gradient(90deg, rgba(201,168,124,0) 0%, rgba(201,168,124,0.8) 50%, rgba(201,168,124,0) 100%);">
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between mt-4" style="gap:12px;">
+                            <div style="color:#6b5a4a;">@(isAuthenticated ? "We are preparing a curated menu just for you." : "โหมดผู้เยี่ยมชม: ดูได้ทุกเมนู แต่ต้องเข้าสู่ระบบก่อนสั่งซื้อ")</div>
+                            @if (isAuthenticated)
+                            {
+                                <a href="~/PublicPage/Menu" class="btn"
+                                   style="background:#1f1b16; color:#f8e8d6; border-radius:999px; padding:10px 18px;">Explore Menu</a>
+                            }
+                            else
+                            {
+                                <a href="~/Account/Login" class="btn"
+                                   style="background:#1f1b16; color:#f8e8d6; border-radius:999px; padding:10px 18px;">Login to Start Order</a>
+                            }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <br>
+
+            <!-- ORDER STEPS SECTION -->
+            <section class="order-steps-section">
+                <div class="container">
+                    <h2 class="section-title">How to Order</h2>
+                    <p class="section-subtitle">สั่งง่ายใน 3 ขั้นตอน</p>
+
+                    <div class="order-steps-grid">
+                        <div class="order-step-card">
+                            <div class="order-step-number">1</div>
+                            <div class="order-step-icon" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor"
+                                     class="bi bi-cart3" viewBox="0 0 16 16">
+                                    <path
+                                    d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l.84 4.479 9.144-.459L13.89 4zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                                </svg>
+                            </div>
+                            <h3 class="order-step-title">เลือกเมนู</h3>
+                            <p class="order-step-text">เลือกเบเกอรี่หรือเครื่องดื่มที่ต้องการ แล้วเพิ่มลงในตะกร้า</p>
+                        </div>
+
+                        <div class="order-step-card">
+                            <div class="order-step-number">2</div>
+                            <div class="order-step-icon" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor"
+                                     viewBox="0 0 16 16">
+                                    <path
+                                    d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1zm13 3H1v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z" />
+                                    <path d="M3 9.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5" />
+                                </svg>
+                            </div>
+                            <h3 class="order-step-title">ชำระเงิน</h3>
+                            <p class="order-step-text">ตรวจสอบรายการสั่งซื้อ เลือกวิธีชำระเงิน แล้วกดยืนยันออเดอร์</p>
+                        </div>
+
+                        <div class="order-step-card">
+                            <div class="order-step-number">3</div>
+                            <div class="order-step-icon" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor"
+                                     class="bi bi-bag-check" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd"
+                                          d="M10.854 8.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 0 1 .708-.708L7.5 10.793l2.646-2.647a.5.5 0 0 1 .708 0" />
+                                    <path
+                                    d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z" />
+                                </svg>
+                            </div>
+                            <h3 class="order-step-title">รอรับ</h3>
+                            <p class="order-step-text">รอรับสินค้าตามเวลาที่เลือกไว้</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- PROMOTIONS SECTION -->
+            <section class="promotions-carousel-section">
+                <div class="container">
+                    @{
+                        var homePromotions = Model.PromotionList.Take(5).ToList();
+                        var promoImages = new List<string>
+                        {
+                            "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1600&auto=format&fit=crop",
+                            "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1600&auto=format&fit=crop",
+                            "https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=1600&auto=format&fit=crop",
+                            "https://images.unsplash.com/photo-1612203985729-70726954388c?q=80&w=1600&auto=format&fit=crop",
+                            "https://www.shiroiya.com/websys2024/wp-content/themes/shiroiya/assets/img/dine/bakery/pagehead.jpg"
+                        };
+                        var shuffledPromoImages = promoImages.OrderBy(_ => Guid.NewGuid()).ToList();
+                    }
+                    <h2 class="section-title">Promotions</h2>
+                    <p class="section-subtitle">ข้อเสนอพิเศษของเรา</p>
+
+                    <div id="promotionsCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-indicators">
+                            @for (var i = 0; i < homePromotions.Count; i++)
+                            {
+                                <button type="button"
+                                        data-bs-target="#promotionsCarousel"
+                                        data-bs-slide-to="@i"
+                                        class="@(i == 0 ? "active" : "")"
+                                        aria-current="@(i == 0 ? "true" : "false")"
+                                        aria-label="Slide @(i + 1)"></button>
+                            }
+                        </div>
+                        <div class="carousel-inner">
+                            @if (homePromotions.Count == 0)
+                            {
+                                <div class="carousel-item active">
+                                    <div class="promo-carousel-card">
+                                        <div class="promo-carousel-content">
+                                            <span class="promo-carousel-tag">No Promotion</span>
+                                            <h3 class="promo-carousel-title">ยังไม่มีโปรโมชั่นที่ใช้งานอยู่</h3>
+                                            <p class="promo-carousel-desc">สามารถเพิ่มโปรโมชั่นได้จาก BackOffice</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                @for (var i = 0; i < homePromotions.Count; i++)
+                                {
+                                    var promo = homePromotions[i];
+                                    var promoImage = shuffledPromoImages[i % shuffledPromoImages.Count];
+                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                        <div class="promo-carousel-card">
+                                            <div class="promo-carousel-image">
+                                                <img src="@promoImage"
+                                                     alt="@promo.Name">
+                                            </div>
+                                            <div class="promo-carousel-content">
+                                                <span class="promo-carousel-tag">@promo.PromoType</span>
+                                                <h3 class="promo-carousel-title">@promo.Name</h3>
+                                                <p class="promo-carousel-desc">@(string.IsNullOrWhiteSpace(promo.Description) ? "โปรโมชั่นพิเศษจาก BakeQuery" : promo.Description)</p>
+                                                <a href="@Url.Action("Promotion", "PublicPage")" class="promo-carousel-btn">View Offer</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#promotionsCarousel"
+                                                    data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#promotionsCarousel"
+                                                    data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- BEST SELLER SECTION -->
+                                <section class="best-seller-section">
+                                    <div class="container">
+                                        @{
+                                            var bestSellers = Model.TopSellingProducts.Take(5).ToList();
+                                        }
+                                        <div class="best-seller-header">
+                                            <h2 class="section-title mb-2">Top 5 Best Seller</h2>
+                                            <p class="section-subtitle mb-0">เมนูแนะนำจากฐานข้อมูล</p>
+                                        </div>
+
+                                        @if (bestSellers.Count == 0)
+                                        {
+                                            <div class="alert alert-light border">ยังไม่มีข้อมูลยอดขายสำหรับคำนวณ Top 5</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="best-seller-list">
+                                                @for (var i = 0; i < bestSellers.Count; i++)
+                                                {
+                                                    var item = bestSellers[i];
+                                                    <article class="best-seller-tile tile-rank-@(@i + 1)">
+                                                        <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://via.placeholder.com/600x400" : item.ImageUrl)"
+                                                             alt="@item.Name">
+                                                        <div class="best-seller-overlay">
+                                                            <span class="rank-pill">#@(@i + 1)</span>
+                                                            <h3 class="best-seller-name">@item.Name</h3>
+                                                            <p class="best-seller-meta">@item.CategoryName · ฿@item.Price.ToString("N0")</p>
+                                                        </div>
+                                                    </article>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </section>
+
+                                <!-- MENU SELECTION SECTION -->
+                                <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+                                <section class="menu-section">
+                                    <div class="container">
+                                        <h2 class="section-title">Menu Selection</h2>
+                                        <p class="section-subtitle">เลือกจากเมนูที่หลากหลายของเรา</p>
+
+                                        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap" data-menu-filters>
+                                            <button type="button" class="btn btn-sm btn-outline-dark active-pill" data-filter="ALL">All</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="BREAD">Bread</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="CAKE">Cake</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="COOKIE">Cookie</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="PASTRY">Pastry</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="BEVERAGE">Beverage</button>
+                                        </div>
+
+                                        <div class="menu-grid">
+                                            @for (var i = 0; i < Model.ProductList.Count; i++)
+                                            {
+                                                var item = Model.ProductList[i];
+                                                var categoryName = item.Category?.Name ?? string.Empty;
+                                                <div class="menu-item animate-zoom-in" style="animation-delay: @(i * 0.1)s;" data-category="@categoryName.ToUpperInvariant()">
+                                                    <div class="menu-card">
+                                                        <div class="menu-image">
+                                                            <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://via.placeholder.com/600x400" : item.ImageUrl)"
+                                                                 alt="@item.Name">
+                                                            <div class="menu-overlay">
+                                                                    @if (isCustomer)
+                                                                    {
+                                                                        <form asp-controller="PublicPage" asp-action="AddToCart" method="post" class="m-0 ajax-cart-form">
+                                                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                                                            <input type="hidden" name="qty" value="1" />
+                                                                            <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                                                            <button type="submit" class="btn-add-cart">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                                         class="bi bi-cart-plus" viewBox="0 0 16 16">
+                                                                        <path
+                                                                        d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z" />
+                                                                        <path
+                                                                        d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                                                    </svg>
+                                                                </button>
+                                                                    </form>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <a asp-controller="Account" asp-action="Login" class="btn-add-cart d-inline-flex align-items-center justify-content-center">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                                             class="bi bi-cart-plus" viewBox="0 0 16 16">
+                                                                            <path
+                                                                            d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z" />
+                                                                            <path
+                                                                            d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                                                        </svg>
+                                                                    </a>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <div class="menu-info">
+                                                            <h3 class="menu-name">@item.Name</h3>
+                                                            <p class="menu-category">@categoryName</p>
+                                                            <div class="menu-footer">
+                                                                <span class="menu-price">฿@item.Price.ToString("N0")</span>
+                                                                @if (isCustomer)
+                                                                {
+                                                                    <form asp-controller="PublicPage" asp-action="AddToCart" method="post" class="m-0 ajax-cart-form">
+                                                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                                                        <input type="hidden" name="qty" value="1" />
+                                                                        <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                                                        <button type="submit" class="btn-add-icon">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                                         class="bi bi-cart-plus" viewBox="0 0 16 16">
+                                                                        <path
+                                                                        d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z" />
+                                                                        <path
+                                                                        d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                                                    </svg>
+                                                                </button>
+                                                                    </form>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <a asp-controller="Account" asp-action="Login" class="btn-add-icon d-inline-flex align-items-center justify-content-center">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                                             class="bi bi-cart-plus" viewBox="0 0 16 16">
+                                                                            <path
+                                                                            d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z" />
+                                                                            <path
+                                                                            d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
+                                                                        </svg>
+                                                                    </a>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterContainer = document.querySelector('[data-menu-filters]');
+        if (!filterContainer) return;
+
+        const filterButtons = filterContainer.querySelectorAll('[data-filter]');
+        const menuItems = document.querySelectorAll('.menu-grid .menu-item');
+
+        if (!filterButtons.length || !menuItems.length) return;
+
+        const setActiveButton = function (selectedButton) {
+            filterButtons.forEach(function (button) {
+                const isSelected = button === selectedButton;
+                button.classList.toggle('active-pill', isSelected);
+                button.classList.toggle('btn-outline-dark', isSelected);
+                button.classList.toggle('btn-outline-secondary', !isSelected);
+            });
+        };
+
+        const applyFilter = function (category) {
+            const normalizedCategory = (category || '').toUpperCase();
+
+            menuItems.forEach(function (item) {
+                const itemCategory = (item.getAttribute('data-category') || '').toUpperCase();
+                const shouldShow = normalizedCategory === 'ALL' || itemCategory === normalizedCategory;
+                item.style.display = shouldShow ? '' : 'none';
+            });
+        };
+
+        filterButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const category = button.getAttribute('data-filter') || 'ALL';
+                setActiveButton(button);
+                applyFilter(category);
+            });
+        });
+
+        document.querySelectorAll('.ajax-cart-form').forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Request failed');
+                    }
+
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (typeof showAjaxToast === 'function') {
+                        showAjaxToast(data.message || 'เพิ่มลงตะกร้าเรียบร้อย');
+                    }
+
+                    if (data.success && typeof updateCartBadge === 'function') {
+                        updateCartBadge(data.totalQty || 0);
+                    }
+                })
+                .catch(function () {
+                    if (typeof showAjaxToast === 'function') {
+                        showAjaxToast('เกิดข้อผิดพลาด กรุณาลองใหม่');
+                    }
+                })
+                .finally(function () {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                });
+            });
+        });
+    });
+</script>

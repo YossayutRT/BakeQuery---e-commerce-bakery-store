@@ -1,0 +1,35 @@
+@{
+   Layout = "_PublicLayout";
+}
+
+@model List<_66033872_Yossayut_rutatip.Models.db.LabStudent>
+
+<div style="margin: 20px;">
+<h1>Lab 9</h1>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>StdID</th>
+            <th>StdPASSWORD</th>
+            <th>StdName</th>
+            <th>StdLastname</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (_66033872_Yossayut_rutatip.Models.db.LabStudent item in Model)
+        {
+            <tr>
+                <td>@item.StdID</td>
+                <td>@item.StdPASSWORD</td>
+                <td>@item.StdName</td>
+                <td>@item.StdLastname</td>
+                <td>
+                    <a asp-route-UID="@item.StdID" asp-action="Lab10" asp-controller="Home">Edit</a>
+                    <a asp-route-UID="@item.StdID" asp-action="Lab10D" asp-controller="Home">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+</div>

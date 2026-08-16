@@ -1,0 +1,113 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+.hero-section {
+    min-height: 90vh;
+    background-image:
+        linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+        url('/image/Banner.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.hero-section h1 {
+    font-family: 'Georgia', serif;
+}
+
+.search-box {
+    max-width: 520px;
+}
+
+.footer-link {
+    text-decoration: none;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.footer-link:hover {
+    color: #f0ad4e;
+    text-decoration: underline;
+}
+
+.footer h5, 
+.footer h6 {
+    margin-bottom: 1rem;
+}
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1080;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    background: #ffffff;
+    border-top: 1px solid rgba(107, 63, 43, 0.2);
+    box-shadow: 0 -6px 20px rgba(33, 22, 14, 0.12);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-bottom-nav.mobile-bottom-nav--guest {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mobile-nav-item {
+    text-decoration: none;
+    color: #6d6258;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 4px 2px;
+  }
+
+  .mobile-nav-item i {
+    font-size: 1rem;
+  }
+
+  .mobile-nav-item.active {
+    color: #6b3f2b;
+  }
+}

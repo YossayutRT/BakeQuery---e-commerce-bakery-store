@@ -1,0 +1,504 @@
+﻿@model _66033872_Yossayut_rutatip.ViewModels.PromotionsPageViewModel
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "Promotions";
+}
+
+<link rel="stylesheet" href="~/css/MenuProducts.css" />
+<link rel="stylesheet" href="~/css/BackOfficeOrderTheme.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<section class="menu-products-section bo-theme">
+    <div class="products-header">
+        <div class="products-header-left">
+            <h2>จัดการโปรโมชั่น</h2>
+            <p>เพิ่มโปรโมชันจากข้อมูลจริงในฐานข้อมูล</p>
+        </div>
+        <button class="btn-add-product" data-bs-toggle="modal" data-bs-target="#addPromotionModal">+ เพิ่มโปรโมชันใหม่</button>
+    </div>
+
+    <div class="products-table-card">
+        <div class="table-header">
+            <h6>รายการโปรโมชันทั้งหมด (@Model.PromotionList.Count รายการ)</h6>
+        </div>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>รหัส</th>
+                    <th>Code สำหรับลูกค้า</th>
+                    <th>ชื่อโปรโมชัน</th>
+                    <th>ประเภท</th>
+                    <th>เงื่อนไข</th>
+                    <th>สิทธิ์ใช้งาน</th>
+                    <th>ช่วงเวลา</th>
+                    <th>รายละเอียด</th>
+                    <th class="text-center">สถานะ</th>
+                    <th class="text-center">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.PromotionList.Count == 0)
+                {
+                    <tr>
+                        <td colspan="10" class="text-center">ยังไม่มีข้อมูลโปรโมชัน</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.PromotionList)
+                    {
+                        <tr>
+                            <td><span class="code-badge">@item.PromoCode</span></td>
+                            <td><span class="code-badge" style="background:#fff3cd;color:#5a4300;border:1px solid #e2c76b;">@item.CustomerCode</span></td>
+                            <td class="product-name">@item.Name</td>
+                            <td>@item.PromoType</td>
+                            <td>
+                                <div class="small">
+                                    Min: ฿@((item.MinOrderAmount ?? 0m).ToString("N2"))
+                                    @if (item.PromoType == "PERCENT")
+                                    {
+                                        <div>ส่วนลด @((item.DiscountPercent ?? 0m).ToString("0.##"))%</div>
+                                    }
+                                    else if (item.PromoType == "FIXED")
+                                    {
+                                        <div>ส่วนลดคงที่ ฿@((item.DiscountAmount ?? 0m).ToString("N2"))</div>
+                                    }
+                                    else if (item.PromoType == "BUY_X_GET_Y")
+                                    {
+                                        <div>ซื้อ @item.BuyQty ฟรี @item.FreeQty (@(item.FreeProductName ?? "-"))</div>
+                                    }
+                                    else
+                                    {
+                                        <div>Member Promotion</div>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    ใช้แล้ว @item.RedemptionCount ครั้ง
+                                    <div>รวม: @(item.MaxRedemptions?.ToString() ?? "ไม่จำกัด")</div>
+                                    <div>ต่อคน: @(item.MaxRedemptionsPerUser?.ToString() ?? "ไม่จำกัด")</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">@item.StartAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                <div class="small text-muted">ถึง @item.EndAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
+                            <td class="text-center">
+                                @if (item.IsActive)
+                                {
+                                    <span class="status-badge status-active">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-out-stock">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#promotionUsageModal"
+                                            data-promotion-id="@item.PromotionId"
+                                            data-promo-code="@item.PromoCode"
+                                            data-promo-name="@item.Name">
+                                        Usage
+                                    </button>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editPromotionModal"
+                                            data-promotion-id="@item.PromotionId"
+                                            data-promo-code="@item.PromoCode"
+                                            data-name="@item.Name"
+                                            data-promo-type="@item.PromoType"
+                                            data-start-at="@item.StartAt.ToString("yyyy-MM-ddTHH:mm")"
+                                            data-end-at="@item.EndAt.ToString("yyyy-MM-ddTHH:mm")"
+                                            data-description="@item.Description"
+                                            data-is-active="@(item.IsActive.ToString().ToLower())"
+                                            data-min-order-amount="@item.MinOrderAmount"
+                                            data-discount-percent="@item.DiscountPercent"
+                                            data-discount-amount="@item.DiscountAmount"
+                                            data-buy-qty="@item.BuyQty"
+                                            data-free-qty="@item.FreeQty"
+                                            data-free-product-id="@item.FreeProductId"
+                                            data-member-only="@(item.MemberOnly.ToString().ToLower())"
+                                            data-max-redemptions="@item.MaxRedemptions"
+                                            data-max-redemptions-per-user="@item.MaxRedemptionsPerUser">
+                                        Edit
+                                    </button>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-controller="BackOffice"
+                                       asp-action="DeletePromotion"
+                                       asp-route-promotionId="@item.PromotionId"
+                                       onclick="return confirm('ยืนยันการลบโปรโมชันนี้ใช่ไหม?');">
+                                        Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<div class="modal fade bo-theme" id="addPromotionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>เพิ่มโปรโมชันใหม่</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPromotionForm" asp-controller="BackOffice" asp-action="Promotions" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Promo Ref (ระบบสร้างอัตโนมัติ)</label>
+                            <input type="text" class="form-control" value="PR001, PR002, ..." disabled>
+                            <div class="form-text">ระบบจะสร้าง PR ลำดับสำหรับหลังบ้าน และสร้าง Code</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ชื่อโปรโมชัน <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" asp-for="PromotionForm.Name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ประเภทโปรโมชัน <span class="text-danger">*</span></label>
+                            <select class="form-select" asp-for="PromotionForm.PromoType" required>
+                                <option value="PERCENT">PERCENT</option>
+                                <option value="FIXED">FIXED</option>
+                                <option value="BUY_X_GET_Y">BUY_X_GET_Y</option>
+                                <option value="MEMBER">MEMBER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">วันเริ่มต้น <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" asp-for="PromotionForm.StartAt" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">วันสิ้นสุด <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" asp-for="PromotionForm.EndAt" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">รายละเอียด</label>
+                            <textarea class="form-control" asp-for="PromotionForm.Description" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ยอดสั่งซื้อขั้นต่ำ</label>
+                            <input type="number" step="0.01" min="0" class="form-control" asp-for="PromotionForm.MinOrderAmount">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ส่วนลด (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control" asp-for="PromotionForm.DiscountPercent">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ส่วนลดคงที่ (บาท)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" asp-for="PromotionForm.DiscountAmount">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ซื้อ X ชิ้น</label>
+                            <input type="number" min="0" class="form-control" asp-for="PromotionForm.BuyQty">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ฟรี Y ชิ้น</label>
+                            <input type="number" min="0" class="form-control" asp-for="PromotionForm.FreeQty">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">สินค้าที่แจกฟรี</label>
+                            <select class="form-select" asp-for="PromotionForm.FreeProductId">
+                                <option value="">-- ไม่ระบุ --</option>
+                                @foreach (var p in Model.ProductOptions)
+                                {
+                                    <option value="@p.ProductId">@p.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จำนวนครั้งที่ใช้ได้ทั้งหมด</label>
+                            <input type="number" min="0" class="form-control" asp-for="PromotionForm.MaxRedemptions" placeholder="0 หรือว่าง = ไม่จำกัด">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จำนวนครั้ง/ผู้ใช้ 1 คน</label>
+                            <input type="number" min="0" class="form-control" asp-for="PromotionForm.MaxRedemptionsPerUser" placeholder="0 หรือว่าง = ไม่จำกัด">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="PromotionForm.MemberOnly" />
+                                <label class="form-check-label" asp-for="PromotionForm.MemberOnly">Member Only</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="PromotionForm.IsActive" />
+                                <label class="form-check-label" asp-for="PromotionForm.IsActive">เปิดใช้งานทันที</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="submit" class="btn btn-save" form="addPromotionForm">บันทึกข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade bo-theme" id="editPromotionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-pen-to-square me-2"></i>แก้ไขโปรโมชัน</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPromotionForm" asp-controller="BackOffice" asp-action="UpdatePromotion" method="post">
+                    <input type="hidden" asp-for="EditPromotionForm.PromotionId" id="editPromotionId" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Promo Code</label>
+                            <input type="text" class="form-control" asp-for="EditPromotionForm.PromoCode" id="editPromotionCode" maxlength="30" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ชื่อโปรโมชัน <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" asp-for="EditPromotionForm.Name" id="editPromotionName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ประเภทโปรโมชัน <span class="text-danger">*</span></label>
+                            <select class="form-select" asp-for="EditPromotionForm.PromoType" id="editPromotionType" required>
+                                <option value="PERCENT">PERCENT</option>
+                                <option value="FIXED">FIXED</option>
+                                <option value="BUY_X_GET_Y">BUY_X_GET_Y</option>
+                                <option value="MEMBER">MEMBER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">วันเริ่มต้น <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" asp-for="EditPromotionForm.StartAt" id="editPromotionStartAt" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">วันสิ้นสุด <span class="text-danger">*</span></label>
+                            <input type="datetime-local" class="form-control" asp-for="EditPromotionForm.EndAt" id="editPromotionEndAt" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">รายละเอียด</label>
+                            <textarea class="form-control" asp-for="EditPromotionForm.Description" id="editPromotionDescription" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ยอดสั่งซื้อขั้นต่ำ</label>
+                            <input type="number" step="0.01" min="0" class="form-control" asp-for="EditPromotionForm.MinOrderAmount" id="editMinOrderAmount">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ส่วนลด (%)</label>
+                            <input type="number" step="0.01" min="0" max="100" class="form-control" asp-for="EditPromotionForm.DiscountPercent" id="editDiscountPercent">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ส่วนลดคงที่ (บาท)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" asp-for="EditPromotionForm.DiscountAmount" id="editDiscountAmount">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ซื้อ X ชิ้น</label>
+                            <input type="number" min="0" class="form-control" asp-for="EditPromotionForm.BuyQty" id="editBuyQty">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ฟรี Y ชิ้น</label>
+                            <input type="number" min="0" class="form-control" asp-for="EditPromotionForm.FreeQty" id="editFreeQty">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">สินค้าที่แจกฟรี</label>
+                            <select class="form-select" asp-for="EditPromotionForm.FreeProductId" id="editFreeProductId">
+                                <option value="">-- ไม่ระบุ --</option>
+                                @foreach (var p in Model.ProductOptions)
+                                {
+                                    <option value="@p.ProductId">@p.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จำนวนครั้งที่ใช้ได้ทั้งหมด</label>
+                            <input type="number" min="0" class="form-control" asp-for="EditPromotionForm.MaxRedemptions" id="editMaxRedemptions">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">จำนวนครั้ง/ผู้ใช้ 1 คน</label>
+                            <input type="number" min="0" class="form-control" asp-for="EditPromotionForm.MaxRedemptionsPerUser" id="editMaxRedemptionsPerUser">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="EditPromotionForm.MemberOnly" id="editMemberOnly" />
+                                <label class="form-check-label" asp-for="EditPromotionForm.MemberOnly">Member Only</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="EditPromotionForm.IsActive" id="editPromotionIsActive" />
+                                <label class="form-check-label" asp-for="EditPromotionForm.IsActive">เปิดใช้งานทันที</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="submit" class="btn btn-save" form="editPromotionForm">อัปเดตข้อมูล</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade bo-theme" id="promotionUsageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-bar me-2"></i>สถิติการใช้งานโปรโมชั่น</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+                    <div><strong>โปรโมชั่น:</strong> <span id="usagePromoName">-</span></div>
+                    <div><strong>รหัส:</strong> <span id="usagePromoCode" class="code-badge">-</span></div>
+                    <div><strong>จำนวนครั้งที่ใช้รวม:</strong> <span id="usageTotalCount">0</span></div>
+                    <div><strong>ผู้ใช้ที่เคยใช้:</strong> <span id="usageUserCount">0</span> คน</div>
+                </div>
+
+                <div id="usageLoading" class="text-muted">กำลังโหลดข้อมูล...</div>
+                <div id="usageError" class="text-danger d-none"></div>
+
+                <div class="table-responsive">
+                    <table class="products-table" id="usageTable">
+                        <thead>
+                            <tr>
+                                <th>รหัสผู้ใช้</th>
+                                <th>ชื่อผู้ใช้</th>
+                                <th>อีเมล</th>
+                                <th class="text-end">ใช้ไป (ครั้ง)</th>
+                                <th class="text-end">ส่วนลดรวม (บาท)</th>
+                                <th>ใช้ล่าสุด</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usageTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">ยังไม่มีข้อมูล</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const editModalElement = document.getElementById("editPromotionModal");
+        if (!editModalElement) {
+            return;
+        }
+
+        editModalElement.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            if (!button) {
+                return;
+            }
+
+            document.getElementById("editPromotionId").value = button.getAttribute("data-promotion-id") || "";
+            document.getElementById("editPromotionCode").value = button.getAttribute("data-promo-code") || "";
+            document.getElementById("editPromotionName").value = button.getAttribute("data-name") || "";
+            document.getElementById("editPromotionType").value = button.getAttribute("data-promo-type") || "PERCENT";
+            document.getElementById("editPromotionStartAt").value = button.getAttribute("data-start-at") || "";
+            document.getElementById("editPromotionEndAt").value = button.getAttribute("data-end-at") || "";
+            document.getElementById("editPromotionDescription").value = button.getAttribute("data-description") || "";
+            document.getElementById("editPromotionIsActive").checked = (button.getAttribute("data-is-active") || "false") === "true";
+            document.getElementById("editMinOrderAmount").value = button.getAttribute("data-min-order-amount") || "";
+            document.getElementById("editDiscountPercent").value = button.getAttribute("data-discount-percent") || "";
+            document.getElementById("editDiscountAmount").value = button.getAttribute("data-discount-amount") || "";
+            document.getElementById("editBuyQty").value = button.getAttribute("data-buy-qty") || "";
+            document.getElementById("editFreeQty").value = button.getAttribute("data-free-qty") || "";
+            document.getElementById("editFreeProductId").value = button.getAttribute("data-free-product-id") || "";
+            document.getElementById("editMemberOnly").checked = (button.getAttribute("data-member-only") || "false") === "true";
+            document.getElementById("editMaxRedemptions").value = button.getAttribute("data-max-redemptions") || "";
+            document.getElementById("editMaxRedemptionsPerUser").value = button.getAttribute("data-max-redemptions-per-user") || "";
+        });
+
+        const usageModalElement = document.getElementById("promotionUsageModal");
+        if (!usageModalElement) {
+            return;
+        }
+
+        usageModalElement.addEventListener("show.bs.modal", async function (event) {
+            const button = event.relatedTarget;
+            if (!button) {
+                return;
+            }
+
+            const promotionId = button.getAttribute("data-promotion-id") || "";
+            const promoCode = button.getAttribute("data-promo-code") || "-";
+            const promoName = button.getAttribute("data-promo-name") || "-";
+
+            const usagePromoName = document.getElementById("usagePromoName");
+            const usagePromoCode = document.getElementById("usagePromoCode");
+            const usageTotalCount = document.getElementById("usageTotalCount");
+            const usageUserCount = document.getElementById("usageUserCount");
+            const usageTableBody = document.getElementById("usageTableBody");
+            const usageLoading = document.getElementById("usageLoading");
+            const usageError = document.getElementById("usageError");
+
+            usagePromoName.textContent = promoName;
+            usagePromoCode.textContent = promoCode;
+            usageTotalCount.textContent = "0";
+            usageUserCount.textContent = "0";
+            usageTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">กำลังโหลดข้อมูล...</td></tr>';
+            usageLoading.classList.remove("d-none");
+            usageError.classList.add("d-none");
+            usageError.textContent = "";
+
+            try {
+                const response = await fetch(`/BackOffice/GetPromotionUsage?promotionId=${encodeURIComponent(promotionId)}`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("ไม่สามารถโหลดข้อมูลการใช้งานโปรโมชั่นได้");
+                }
+
+                const result = await response.json();
+                const rows = result.usageByUser || [];
+
+                usagePromoName.textContent = result.promotion?.name || promoName;
+                usagePromoCode.textContent = result.promotion?.promoCode || promoCode;
+                usageTotalCount.textContent = String(result.totalRedemptions || 0);
+                usageUserCount.textContent = String(result.uniqueUsers || 0);
+
+                if (rows.length === 0) {
+                    usageTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">ยังไม่มีผู้ใช้โปรโมชั่นนี้</td></tr>';
+                } else {
+                    usageTableBody.innerHTML = rows.map(row => `
+                        <tr>
+                            <td>${row.userCode ?? "-"}</td>
+                            <td>${row.fullName ?? "-"}</td>
+                            <td>${row.email ?? "-"}</td>
+                            <td class="text-end">${row.useCount ?? 0}</td>
+                            <td class="text-end">฿${Number(row.totalDiscount ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td>${row.lastUsedAt ?? "-"}</td>
+                        </tr>
+                    `).join("");
+                }
+            } catch (error) {
+                usageError.textContent = error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+                usageError.classList.remove("d-none");
+                usageTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">โหลดข้อมูลไม่สำเร็จ</td></tr>';
+            } finally {
+                usageLoading.classList.add("d-none");
+            }
+        });
+    });
+</script>

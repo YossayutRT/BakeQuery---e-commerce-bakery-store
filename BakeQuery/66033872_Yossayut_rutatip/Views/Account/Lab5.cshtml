@@ -1,0 +1,43 @@
+
+ @* @model IEnumerable<_66033872_Yossayut_rutatip.ViewModels.LabUserViewModel> *@
+ @model _66033872_Yossayut_rutatip.ViewModels.LabUserViewModel
+@* <div>
+    <table class="table table-bordered">
+
+        <thead>
+            <tr>
+                <th>UserId</th>
+                <th>Name</th>
+                <th>Lastname</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.UserId</td>
+                    <td>@item.Name</td>
+                    <td>@item.Lastname</td>
+                </tr>
+            }
+        </tbody>
+
+    </table>
+
+</div> *@
+
+<h1>Lab 5</h1>
+<div>
+    <form asp-controller="Account" asp-action="Lab5">
+        UserId<input type="text" asp-for="UserId" class="form-control"/> <br> 
+        Name<input type="text" asp-for="Name" class="form-control"/> <br>
+        Lastname<input type="text" asp-for="Lastname" class="form-control"/> <br>
+        <button class="btn btn-success">Submit</button>
+    </form>
+    <br>
+    @ViewBag.UserId
+    @ViewBag.Name
+    @ViewBag.Lastname
+</div>
+

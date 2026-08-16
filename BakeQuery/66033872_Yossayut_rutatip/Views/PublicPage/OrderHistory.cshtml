@@ -1,0 +1,445 @@
+@model _66033872_Yossayut_rutatip.ViewModels.CustomerOrderHistoryViewModel
+
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Order History";
+
+    Func<string, string> statusClass = status => status.ToUpperInvariant() switch
+    {
+        "DELIVERED" => "status delivered",
+        "CANCELLED" => "status cancelled",
+        _ => "status"
+    };
+
+    Func<string, string> cardToneClass = status => status.ToUpperInvariant() switch
+    {
+        "DELIVERED" => "order-card--delivered",
+        "CANCELLED" => "order-card--cancelled",
+        _ => "order-card--default"
+    };
+
+    Func<string, string> proofStatusClass = status => status.ToUpperInvariant() switch
+    {
+        "APPROVED" => "proof-status approved",
+        "REJECTED" => "proof-status rejected",
+        _ => "proof-status"
+    };
+}
+
+<section class="orders-shell container py-4 py-lg-5">
+    <div class="orders-hero mb-4">
+        <h2 class="orders-title">Order History</h2>
+        <p class="orders-subtitle mb-0">ออเดอร์ที่ส่งสำเร็จหรือยกเลิกจะอยู่ในหน้านี้ และไม่สามารถแก้ไขได้</p>
+        <a asp-controller="PublicPage" asp-action="MyOrders" class="btn btn-sm btn-outline-dark mt-2">กลับไปหน้า My Orders</a>
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="empty-state card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <h4 class="mb-2">ยังไม่มีรายการที่จบแล้ว</h4>
+                <p class="text-muted">เมื่อออเดอร์เป็น DELIVERED หรือ CANCELLED จะย้ายมาแสดงที่หน้านี้</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        var orderIndex = 0;
+        <div class="vstack gap-3">
+            @foreach (var order in Model.Orders)
+            {
+                orderIndex++;
+                var isLatestOrder = orderIndex == 1;
+                var detailsId = $"order-details-{orderIndex}";
+                <article class="order-card @cardToneClass(order.OrderStatus) @(!isLatestOrder ? "is-collapsed" : string.Empty)">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3 order-head-row">
+                            <div>
+                                <div class="order-chip">ORDER #@orderIndex</div>
+                                <div class="order-no">@order.OrderNo</div>
+                                <div class="order-time">@order.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="@statusClass(order.OrderStatus)">@order.OrderStatus</span>
+                                <div class="payment-status">Payment: @order.PaymentStatus</div>
+                                <button type="button"
+                                        class="btn btn-sm order-toggle-btn mt-2"
+                                        data-order-toggle="@detailsId"
+                                        aria-expanded="@(isLatestOrder ? "true" : "false")"
+                                        aria-controls="@detailsId">
+                                    <span class="order-toggle-label">ซ่อนรายละเอียด</span>
+                                    <i class="fa-solid fa-chevron-up order-toggle-icon" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="@detailsId" class="order-details" hidden="@(!isLatestOrder ? "hidden" : null)">
+                            <div class="order-sections mb-3">
+                                <div class="order-items">
+                                    <div class="section-label mb-2">รายการสินค้า</div>
+                                    @foreach (var item in order.Items)
+                                    {
+                                        <div class="item-row">@item</div>
+                                    }
+                                    <div class="order-total mt-3">ยอดรวม: ฿@order.GrandTotal.ToString("N2")</div>
+                                </div>
+
+                                <div class="proof-box">
+                                    <div class="section-label mb-2">หลักฐานการชำระเงิน</div>
+                                    @if (order.PaymentProofs.Count == 0)
+                                    {
+                                        <div class="text-muted small mb-2">ไม่มีหลักฐานการชำระเงิน</div>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var proof in order.PaymentProofs)
+                                        {
+                                            <div class="proof-item">
+                                                <div class="d-flex justify-content-between flex-wrap gap-2">
+                                                    <a href="@proof.FilePath" target="_blank" class="fw-semibold">@proof.OriginalFileName</a>
+                                                    <span class="@proofStatusClass(proof.VerificationStatus)">@proof.VerificationStatus</span>
+                                                </div>
+                                                <div class="text-muted small">@proof.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                                @if (!string.IsNullOrWhiteSpace(proof.UploadNote))
+                                                {
+                                                    <div class="small mt-1">@proof.UploadNote</div>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(order.CustomerNote))
+                            {
+                                <div class="customer-note mb-3">
+                                    <div class="section-label">หมายเหตุที่ส่งถึงร้าน</div>
+                                    <div>@order.CustomerNote</div>
+                                </div>
+                            }
+
+                            <div class="reply-box">
+                                <div class="section-label mb-2">ข้อความตอบกลับจากทีมงาน</div>
+                                @if (order.Replies.Count == 0)
+                                {
+                                    <div class="text-muted small">ยังไม่มีข้อความตอบกลับ</div>
+                                }
+                                else
+                                {
+                                    @foreach (var reply in order.Replies)
+                                    {
+                                        <div class="reply-item">
+                                            <div class="d-flex justify-content-between flex-wrap gap-1">
+                                                <div class="fw-semibold">@reply.RepliedBy</div>
+                                                <div class="text-muted small">@reply.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                            </div>
+                                            <div class="reply-text">@reply.Message</div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<style>
+    .orders-shell {
+        max-width: 1000px;
+        font-family: 'Noto Sans Thai', sans-serif;
+    }
+
+    .orders-hero {
+        padding: 20px 22px;
+        border-radius: 16px;
+        background: linear-gradient(125deg, #fff8ef 0%, #f6ece0 100%);
+        border: 1px solid #ebdbc9;
+    }
+
+    .orders-title {
+        margin-bottom: 6px;
+        font-weight: 800;
+        color: #2a2017;
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(2rem, 3.2vw, 2.6rem);
+        letter-spacing: 0.2px;
+    }
+
+    .orders-subtitle {
+        color: #7d6a55;
+    }
+
+    .order-card {
+        border: 1px solid #eadfcf;
+        border-radius: 16px;
+        box-shadow: 0 10px 24px rgba(42, 30, 18, 0.08);
+        border-left: 8px solid #8f7a63;
+        background: #fff;
+    }
+
+    .order-card--delivered {
+        border-left-color: #25a572;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fdfb 100%);
+    }
+
+    .order-card--cancelled {
+        border-left-color: #d26461;
+        background: linear-gradient(180deg, #ffffff 0%, #fff9f9 100%);
+    }
+
+    .order-head-row {
+        padding-bottom: 12px;
+        border-bottom: 1px dashed #e5d9c8;
+    }
+
+    .order-chip {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 0.68rem;
+        font-weight: 800;
+        color: #f2e5d2;
+        background: #2d2419;
+        margin-bottom: 6px;
+        letter-spacing: .2px;
+    }
+
+    .order-no {
+        font-size: 1.06rem;
+        font-weight: 800;
+        color: #2c231a;
+    }
+
+    .order-time {
+        font-size: 0.86rem;
+        color: #8a7a68;
+    }
+
+    .status {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+    }
+
+    .status.delivered { color: #106247; background: #dcf4e9; }
+    .status.cancelled { color: #a3423f; background: #fde8e8; }
+
+    .payment-status {
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: #8a7a68;
+    }
+
+    .order-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        border: 1px solid #d8c2a4;
+        background: linear-gradient(140deg, #fffdf9 0%, #f8ecd9 100%);
+        color: #5f4324;
+        font-weight: 800;
+        font-size: 0.73rem;
+        padding: 5px 12px;
+        line-height: 1.2;
+        letter-spacing: 0.15px;
+        box-shadow: 0 4px 10px rgba(86, 55, 24, 0.08);
+        transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .order-toggle-btn:hover {
+        background: linear-gradient(140deg, #fff8ed 0%, #f4e1c4 100%);
+        color: #4e361d;
+        border-color: #b9976d;
+        box-shadow: 0 7px 14px rgba(86, 55, 24, 0.16);
+        transform: translateY(-1px);
+    }
+
+    .order-toggle-btn .order-toggle-icon {
+        font-size: 0.68rem;
+        transition: transform 0.2s ease;
+    }
+
+    .order-toggle-btn.is-collapsed {
+        background: #ffffff;
+        color: #6e5030;
+        border-color: #d8c9b4;
+        box-shadow: none;
+    }
+
+    .order-toggle-btn.is-collapsed .order-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .order-card.is-collapsed .order-head-row {
+        margin-bottom: 0 !important;
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .order-sections {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 10px;
+    }
+
+    .order-items {
+        border: 1px solid #eee4d6;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fffdfa;
+    }
+
+    .item-row + .item-row {
+        margin-top: 4px;
+    }
+
+    .order-total {
+        font-weight: 700;
+        color: #2d241a;
+    }
+
+    .section-label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #9b7a4f;
+        letter-spacing: 0.2px;
+    }
+
+    .customer-note {
+        border: 1px solid #ece2d6;
+        background: #fbf8f3;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+
+    .reply-box {
+        border: 1px solid #e8ded1;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fff;
+    }
+
+    .proof-box {
+        border: 1px solid #e8ded1;
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: #fff;
+    }
+
+    .proof-item + .proof-item {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #eadfce;
+    }
+
+    .proof-status {
+        font-size: 0.72rem;
+        font-weight: 700;
+        border-radius: 999px;
+        background: #efe5d8;
+        color: #7f6036;
+        padding: 3px 8px;
+    }
+
+    .proof-status.approved {
+        background: #def3e9;
+        color: #0d6647;
+    }
+
+    .proof-status.rejected {
+        background: #fee9e9;
+        color: #9f3f3f;
+    }
+
+    .reply-item + .reply-item {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #eadfce;
+    }
+
+    .reply-text {
+        margin-top: 4px;
+        color: #46392c;
+    }
+
+    .empty-state {
+        border-radius: 16px;
+    }
+
+    @@media (max-width: 992px) {
+        .order-sections {
+            grid-template-columns: 1fr;
+        }
+
+        .order-toggle-btn {
+            margin-top: 8px;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const toggleButtons = document.querySelectorAll('[data-order-toggle]');
+        if (!toggleButtons.length) return;
+
+        const setToggleState = function (button, expanded) {
+            const label = button.querySelector('.order-toggle-label');
+            if (label) {
+                label.textContent = expanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด';
+            }
+
+            button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            button.classList.toggle('is-collapsed', !expanded);
+        };
+
+        toggleButtons.forEach(function (button) {
+            const expanded = button.getAttribute('aria-expanded') === 'true';
+            const detailsId = button.getAttribute('data-order-toggle');
+            const details = detailsId ? document.getElementById(detailsId) : null;
+            const card = button.closest('.order-card');
+
+            if (details) {
+                details.hidden = !expanded;
+            }
+
+            if (card) {
+                card.classList.toggle('is-collapsed', !expanded);
+            }
+
+            setToggleState(button, expanded);
+        });
+
+        toggleButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const detailsId = button.getAttribute('data-order-toggle');
+                if (!detailsId) return;
+
+                const details = document.getElementById(detailsId);
+                if (!details) return;
+
+                const isExpanded = button.getAttribute('aria-expanded') === 'true';
+                const card = button.closest('.order-card');
+                if (!card) return;
+
+                if (isExpanded) {
+                    details.hidden = true;
+                    setToggleState(button, false);
+                    card.classList.add('is-collapsed');
+                    return;
+                }
+
+                details.hidden = false;
+                setToggleState(button, true);
+                card.classList.remove('is-collapsed');
+            });
+        });
+    })();
+</script>

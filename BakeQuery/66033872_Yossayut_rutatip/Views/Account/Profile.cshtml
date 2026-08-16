@@ -1,0 +1,124 @@
+﻿@model _66033872_Yossayut_rutatip.ViewModels.ProfileViewModel
+
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Profile";
+}
+
+<section class="profile-shell container py-4 py-lg-5">
+    <div class="profile-hero mb-4">
+        <h2 class="mb-1">Profile & Shipping Address</h2>
+        <p class="mb-0">กรอกที่อยู่จัดส่งให้ครบเพื่อให้สามารถทำรายการสั่งซื้อได้</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="alert alert-@(string.Equals(Model.MessageType, "success", StringComparison.OrdinalIgnoreCase) ? "success" : "danger")" role="alert">
+            @Model.Message
+        </div>
+    }
+
+    @if (!Model.HasDefaultAddress)
+    {
+        <div class="alert alert-warning" role="alert">
+            ยังไม่ได้ตั้งค่าที่อยู่จัดส่งหลัก กรุณากรอกข้อมูลด้านล่างก่อนสั่งซื้อ
+        </div>
+    }
+
+    <form asp-controller="Account" asp-action="Profile" method="post" class="card border-0 shadow-sm profile-card">
+        <div class="card-body p-4 p-lg-5">
+            <h5 class="section-title">ข้อมูลบัญชี</h5>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">ชื่อ-นามสกุล</label>
+                    <input asp-for="FullName" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">อีเมล</label>
+                    <input asp-for="Email" type="email" class="form-control" required readonly/>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">เบอร์โทร (บัญชี)</label>
+                    <input asp-for="Phone" class="form-control" maxlength="10" pattern="[0-9]{1,10}" inputmode="numeric" readonly />
+                </div>
+            </div>
+
+            <h5 class="section-title">ที่อยู่จัดส่งหลัก</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">ชื่อผู้รับ</label>
+                    <input asp-for="RecipientName" class="form-control" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">เบอร์โทรผู้รับ</label>
+                    <input asp-for="AddressPhone" class="form-control" maxlength="10" pattern="[0-9]{1,10}" inputmode="numeric" required />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">ที่อยู่บรรทัด 1</label>
+                    <input asp-for="Line1" class="form-control" placeholder="บ้านเลขที่ / ถนน" required />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">ที่อยู่บรรทัด 2 (ถ้ามี)</label>
+                    <input asp-for="Line2" class="form-control" placeholder="อาคาร / หมู่บ้าน" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">เขต/อำเภอ</label>
+                    <input asp-for="District" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">จังหวัด</label>
+                    <input asp-for="Province" class="form-control" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">รหัสไปรษณีย์</label>
+                    <input asp-for="PostalCode" class="form-control" maxlength="5" pattern="[0-9]{5}" inputmode="numeric" required />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">ประเทศ</label>
+                    <input asp-for="Country" class="form-control" required readonly/>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-dark px-4">บันทึกข้อมูล</button>
+                <a asp-controller="PublicPage" asp-action="Cart" class="btn btn-outline-secondary px-4">ไปตะกร้าสินค้า</a>
+            </div>
+        </div>
+    </form>
+</section>
+
+<style>
+    .profile-shell {
+        max-width: 980px;
+    }
+
+    .profile-hero {
+        border: 1px solid #eadfce;
+        border-radius: 16px;
+        padding: 18px 20px;
+        background: linear-gradient(120deg, #fff8ef 0%, #f6ece0 100%);
+    }
+
+    .profile-hero h2 {
+        font-weight: 800;
+        color: #2b2118;
+    }
+
+    .profile-hero p {
+        color: #7b6b59;
+    }
+
+    .profile-card {
+        border-radius: 16px;
+    }
+
+    .section-title {
+        font-weight: 700;
+        color: #3a2e22;
+        margin-bottom: 12px;
+    }
+
+    .form-control {
+        border-radius: 10px;
+    }
+</style>

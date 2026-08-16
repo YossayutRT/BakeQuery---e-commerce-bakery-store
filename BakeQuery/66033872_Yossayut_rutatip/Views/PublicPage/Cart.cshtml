@@ -1,0 +1,282 @@
+﻿@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "ตะกร้าสินค้า";
+}
+@model _66033872_Yossayut_rutatip.ViewModels.CartPageViewModel
+
+<div class="cart-shell container py-4 py-lg-5">
+    <div class="cart-header mb-4">
+        <h2 class="cart-title">ตะกร้าสินค้า</h2>
+        <p class="cart-subtitle mb-0">เปลี่ยนจำนวนสินค้าแล้วระบบจะคำนวณราคารวมให้อัตโนมัติ</p>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-12 col-lg-8">
+            @if (Model.Items.Count == 0)
+            {
+                <div class="empty-cart card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-basket2" viewBox="0 0 16 16">
+  <path d="M4 10a1 1 0 0 1 2 0v2a1 1 0 0 1-2 0zm3 0a1 1 0 0 1 2 0v2a1 1 0 0 1-2 0zm3 0a1 1 0 1 1 2 0v2a1 1 0 0 1-2 0z"/>
+  <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15.5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-.623l-1.844 6.456a.75.75 0 0 1-.722.544H3.69a.75.75 0 0 1-.722-.544L1.123 8H.5a.5.5 0 0 1-.5-.5v-1A.5.5 0 0 1 .5 6h1.717L5.07 1.243a.5.5 0 0 1 .686-.172zM2.163 8l1.714 6h8.246l1.714-6z"/>
+</svg>
+                        <h4 class="mt-3">ตะกร้าสินค้าว่าง</h4>
+                        <p class="text-muted">เลือกเมนูที่ชอบแล้วกลับมาชำระเงินได้เลย</p>
+                        <a asp-controller="PublicPage" asp-action="Menu" class="btn btn-dark px-4 rounded-pill">ไปที่เมนู</a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="cart-list card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        @foreach (var item in Model.Items)
+                        {
+                            <div class="cart-item d-flex gap-3 p-3 p-md-4 align-items-center" data-cart-item-id="@item.CartItemId" data-unit-price="@item.UnitPrice.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)">
+                                <img src="@(string.IsNullOrWhiteSpace(item.ProductImageUrl) ? "https://via.placeholder.com/110x110" : item.ProductImageUrl)"
+                                     alt="@item.ProductName"
+                                     class="cart-thumb" />
+
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">@item.ProductName</h6>
+                                    <div class="text-muted small">฿@item.UnitPrice.ToString("N2") ต่อชิ้น · คงเหลือ @item.StockQty ชิ้น</div>
+
+                                    <div class="mt-3 d-flex align-items-center gap-2">
+                                        <label class="small text-muted mb-0">จำนวน</label>
+                                        <input type="number"
+                                               class="form-control qty-input"
+                                               value="@item.Qty"
+                                               min="0"
+                                               max="@item.StockQty"
+                                               style="width: 92px;" />
+                                    </div>
+                                </div>
+
+                                <div class="text-end cart-item-price-block">
+                                    <div class="fw-bold cart-line-total">฿@item.LineTotal.ToString("N2")</div>
+                                    <form asp-controller="PublicPage" asp-action="RemoveFromCart" method="post" class="mt-2">
+                                        <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                        <button type="submit" class="btn btn-link btn-sm text-danger text-decoration-none p-0">ลบสินค้า</button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm summary-card">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">สรุปคำสั่งซื้อ</h5>
+                        @if (!Model.HasDefaultAddress)
+                        {
+                            <div class="alert alert-warning small" role="alert">
+                                กรุณากรอกที่อยู่ในหน้า Profile ก่อนทำรายการสั่งซื้อ
+                                <div class="mt-2">
+                                    <a asp-controller="Account" asp-action="Profile" class="btn btn-sm btn-outline-dark">ไปหน้า Profile</a>
+                                </div>
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(Model.DefaultAddressDisplay))
+                        {
+                            <div class="alert alert-light border small" role="alert">
+                                จัดส่งไปที่: @Model.DefaultAddressDisplay
+                            </div>
+                        }
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>จำนวนชิ้น</span>
+                        <span id="summaryQty" class="fw-semibold">@Model.TotalQty</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>ราคารวม</span>
+                        <span id="summarySubtotal" class="fw-semibold">฿@Model.Subtotal.ToString("N2")</span>
+                    </div>
+                    <form asp-controller="PublicPage" asp-action="Cart" method="get" class="mt-3 mb-2">
+                        <label class="form-label">Promo Code</label>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control" name="promoCode" value="@Model.PromoCode" placeholder="เช่น BQ-1234" />
+                            <button type="submit" class="btn btn-outline-dark">Apply</button>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.PromoMessage))
+                        {
+                            <div class="small mt-2 @(Model.IsPromoApplied ? "text-success" : "text-danger")">@Model.PromoMessage</div>
+                        }
+                    </form>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>ส่วนลด</span>
+                        <span id="summaryDiscount" class="fw-semibold text-success">-฿@Model.DiscountTotal.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between pt-2 mt-2 border-top">
+                        <span class="fw-semibold">ยอดสุทธิ</span>
+                        <span id="summaryGrand" class="fw-bold text-dark">฿@Model.GrandTotal.ToString("N2")</span>
+                    </div>
+
+                    <form asp-controller="PublicPage" asp-action="Checkout" method="post" class="mt-3">
+                        <input type="hidden" name="PromoCode" value="@Model.PromoCode" />
+                        <label class="form-label">ข้อความถึงร้าน</label>
+                        <textarea class="form-control mb-3" name="CheckoutNote" rows="3" placeholder="เช่น ขอหวานน้อย หรือระบุเวลาที่สะดวกรับสินค้า"></textarea>
+                        <button type="submit" class="btn btn-dark w-100 rounded-pill" @((Model.Items.Count == 0 || !Model.HasDefaultAddress) ? "disabled" : null)>ดำเนินการสั่งซื้อ</button>
+                    </form>
+
+                    @if (Model.Items.Count > 0)
+                    {
+                        <form asp-controller="PublicPage" asp-action="ClearCart" method="post" class="mt-2" onsubmit="return confirm('ยืนยันการล้างรายการสินค้าในตะกร้าทั้งหมด?');">
+                            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">ล้างรายการทั้งหมด</button>
+                        </form>
+                    }
+
+                    <a asp-controller="PublicPage" asp-action="Menu" class="btn btn-outline-secondary w-100 rounded-pill mt-2">เลือกสินค้าเพิ่ม</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cart-shell {
+        max-width: 1200px;
+    }
+
+    .cart-title {
+        font-weight: 800;
+        color: #2d241a;
+    }
+
+    .cart-subtitle {
+        color: #7b6d5c;
+    }
+
+    .cart-list {
+        border-radius: 16px;
+        overflow: hidden;
+    }
+
+    .cart-item + .cart-item {
+        border-top: 1px solid #efe8de;
+    }
+
+    .cart-thumb {
+        width: 96px;
+        height: 96px;
+        border-radius: 14px;
+        object-fit: cover;
+        border: 1px solid #f1e9df;
+    }
+
+    .summary-card {
+        border-radius: 16px;
+        position: sticky;
+        top: 92px;
+    }
+
+    .empty-cart {
+        border-radius: 16px;
+    }
+
+    .empty-icon {
+        font-size: 42px;
+    }
+
+    .qty-input {
+        border-color: #dccdb9;
+    }
+
+    @@media (max-width: 768px) {
+        .summary-card {
+            position: static;
+        }
+
+        .cart-item {
+            align-items: flex-start !important;
+        }
+
+        .cart-item-price-block {
+            min-width: 84px;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const items = document.querySelectorAll('.cart-item');
+        if (!items.length) return;
+
+        const qtyEl = document.getElementById('summaryQty');
+        const subtotalEl = document.getElementById('summarySubtotal');
+        const discountEl = document.getElementById('summaryDiscount');
+        const grandEl = document.getElementById('summaryGrand');
+        const promoApplyInput = document.querySelector('input[name="promoCode"]');
+        const checkoutPromoInput = document.querySelector('input[name="PromoCode"]');
+
+        const toNumber = (v) => Number(v || 0);
+        const toPrice = (v) => `฿${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        function recalcSummary() {
+            let qty = 0;
+            let subtotal = 0;
+            document.querySelectorAll('.cart-item').forEach((row) => {
+                const input = row.querySelector('.qty-input');
+                const unitPrice = toNumber(row.dataset.unitPrice);
+                const itemQty = Math.max(0, toNumber(input.value));
+                qty += itemQty;
+                subtotal += itemQty * unitPrice;
+                const lineEl = row.querySelector('.cart-line-total');
+                lineEl.textContent = toPrice(itemQty * unitPrice);
+            });
+
+            qtyEl.textContent = qty;
+            subtotalEl.textContent = toPrice(subtotal);
+            grandEl.textContent = toPrice(subtotal);
+            if (discountEl) {
+                discountEl.textContent = '-฿0.00';
+            }
+            if (promoApplyInput) {
+                promoApplyInput.value = '';
+            }
+            if (checkoutPromoInput) {
+                checkoutPromoInput.value = '';
+            }
+        }
+
+        async function syncCart(row, qty) {
+            const cartItemId = row.dataset.cartItemId;
+            const body = new URLSearchParams({ cartItemId, qty });
+
+            await fetch('/PublicPage/UpdateCartItem', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: body.toString()
+            });
+        }
+
+        document.querySelectorAll('.qty-input').forEach((input) => {
+            input.addEventListener('input', () => {
+                const row = input.closest('.cart-item');
+                const max = toNumber(input.max);
+                if (toNumber(input.value) > max) {
+                    input.value = max;
+                }
+                if (toNumber(input.value) < 0) {
+                    input.value = 0;
+                }
+                recalcSummary();
+            });
+
+            input.addEventListener('change', async () => {
+                const row = input.closest('.cart-item');
+                const qty = Math.max(0, toNumber(input.value));
+                await syncCart(row, qty);
+                if (qty === 0) {
+                    row.remove();
+                }
+                recalcSummary();
+            });
+        });
+    })();
+</script>

@@ -1,0 +1,199 @@
+﻿@model List<_66033872_Yossayut_rutatip.Models.db.Promotion>
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = "Promotions";
+
+    DateTime normalizePromotionDate(DateTime value)
+    {
+      return value.Year > 2400 ? value.AddYears(-543) : value;
+    }
+
+    string buildCustomerCode(_66033872_Yossayut_rutatip.Models.db.Promotion promotion)
+    {
+      using var sha = System.Security.Cryptography.SHA256.Create();
+      var baseText = $"{promotion.PromotionId}|{promotion.PromoCode}|{normalizePromotionDate(promotion.StartAt):yyyyMMdd}";
+      var bytes = System.Text.Encoding.UTF8.GetBytes(baseText);
+      var hash = sha.ComputeHash(bytes);
+      var token = Convert.ToHexString(hash)[..8];
+      return $"BQ-{token}";
+    }
+}
+
+<link rel="stylesheet" href="~/css/PromotionGrid.css" />
+
+<section class="promotions-section">
+  <div class="container">
+    @{
+      var promoImages = new List<string>
+      {
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=1600&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1612203985729-70726954388c?q=80&w=1600&auto=format&fit=crop",
+        "https://www.shiroiya.com/websys2024/wp-content/themes/shiroiya/assets/img/dine/bakery/pagehead.jpg"
+      };
+      var shuffledPromoImages = promoImages.OrderBy(_ => Guid.NewGuid()).ToList();
+    }
+    <h2 class="section-title">Promotions</h2>
+    <p class="section-subtitle">ข้อเสนอพิเศษของเรา</p>
+
+    <div class="promo-grid">
+      @if (Model.Count == 0)
+      {
+        <div class="promo-card">
+          <div class="promo-body">
+            <h3 class="promo-title">ยังไม่มีโปรโมชั่นที่ใช้งานอยู่</h3>
+            <p class="promo-desc">กรุณาตรวจสอบอีกครั้งในภายหลัง</p>
+          </div>
+        </div>
+      }
+      else
+      {
+        @for (var i = 0; i < Model.Count; i++)
+        {
+          var item = Model[i];
+          var customerCode = buildCustomerCode(item);
+          var startAt = normalizePromotionDate(item.StartAt);
+          var endAt = normalizePromotionDate(item.EndAt);
+          var promoImage = shuffledPromoImages[i % shuffledPromoImages.Count];
+          <div class="promo-card">
+            <div class="promo-image">
+              <img src="@promoImage" alt="@item.Name">
+            </div>
+            <div class="promo-body">
+              <span class="promo-tag">@item.PromoType</span>
+              <h3 class="promo-title">@item.Name</h3>
+              <p class="promo-desc">@(string.IsNullOrWhiteSpace(item.Description) ? "โปรโมชั่นพิเศษจาก BakeQuery" : item.Description)</p>
+              <div class="promo-meta-row">
+                <div class="promo-meta-item">
+                  <span class="promo-meta-label">หมดเขต</span>
+                  <span class="promo-meta-value">@endAt.ToString("dd/MM/yyyy")</span>
+                </div>
+                <div class="promo-meta-item promo-meta-code">
+                  <span class="promo-meta-label">Code</span>
+                  <span class="promo-meta-value">@customerCode</span>
+                </div>
+              </div>
+              <button type="button" 
+                      class="promo-btn"
+                      data-bs-toggle="modal"
+                      data-bs-target="#promoDetailModal"
+                      data-promo-id="@item.PromotionId"
+                      data-promo-name="@item.Name"
+                      data-promo-type="@item.PromoType"
+                      data-promo-desc="@item.Description"
+                      data-promo-start="@startAt.ToString("dd/MM/yyyy HH:mm")"
+                      data-promo-end="@endAt.ToString("dd/MM/yyyy HH:mm")"
+                      data-promo-code="@customerCode">
+                ดูรายละเอียด
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</section>
+
+<!-- Modal Promotion Details -->
+<div class="modal fade" id="promoDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content promo-modal-content">
+      <div class="modal-header promo-modal-header">
+        <h5 class="modal-title fw-bold" id="promoDetailTitle">โปรโมชั่น</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-4">
+          <div class="col-12">
+            <h6 class="text-muted">ชื่อโปรโมชั่น</h6>
+            <h5 id="promoDetailName" class="fw-bold">-</h5>
+          </div>
+          
+          <div class="col-md-6">
+            <h6 class="text-muted">ประเภท</h6>
+            <p>
+              <span id="promoDetailType" class="badge promo-type-badge">-</span>
+            </p>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-muted">โค้ดโปรโมชั่น</h6>
+            <div class="input-group input-group-sm">
+              <input type="text" id="promoDetailCode" class="form-control font-monospace" readonly>
+              <button class="btn btn-outline-secondary" type="button" onclick="copyPromoCode(event)">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <h6 class="text-muted">รายละเอียด</h6>
+            <p id="promoDetailDesc" class="text-break">-</p>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-muted">วันเริ่มต้น</h6>
+            <p id="promoDetailStart" class="fw-semibold">-</p>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-muted">วันสิ้นสุด</h6>
+            <p id="promoDetailEnd" class="fw-semibold text-danger">-</p>
+          </div>
+
+          <div class="col-12">
+            <div class="alert alert-info small mb-0">
+              <i class="fas fa-info-circle me-2"></i>
+              <span>ใช้โค้ดนี้ในตะกร้าของคุณเพื่อรับส่วนลด</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light border" data-bs-dismiss="modal">ปิด</button>
+        <a href="/PublicPage/Menu" class="btn btn-dark rounded-pill px-4">
+          <i class="fas fa-shopping-cart me-2"></i>ไปช้อปสินค้า
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.getElementById('promoDetailModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    if (!button) return;
+
+    document.getElementById('promoDetailTitle').textContent = button.getAttribute('data-promo-name') || 'โปรโมชั่น';
+    document.getElementById('promoDetailName').textContent = button.getAttribute('data-promo-name') || '-';
+    document.getElementById('promoDetailType').textContent = button.getAttribute('data-promo-type') || '-';
+    document.getElementById('promoDetailDesc').textContent = button.getAttribute('data-promo-desc') || '-';
+    document.getElementById('promoDetailStart').textContent = button.getAttribute('data-promo-start') || '-';
+    document.getElementById('promoDetailEnd').textContent = button.getAttribute('data-promo-end') || '-';
+    document.getElementById('promoDetailCode').value = button.getAttribute('data-promo-code') || '-';
+  });
+
+  function copyPromoCode(event) {
+    const codeInput = document.getElementById('promoDetailCode');
+    if (!codeInput || !codeInput.value || codeInput.value === '-') return;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(codeInput.value);
+    } else {
+      codeInput.select();
+      document.execCommand('copy');
+    }
+
+    const btn = event.currentTarget || event.target.closest('button');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i>';
+
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+    }, 1500);
+  }
+</script>

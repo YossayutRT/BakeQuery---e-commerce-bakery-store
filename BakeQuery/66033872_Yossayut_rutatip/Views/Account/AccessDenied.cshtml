@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "_PublicLayout";
+}
+
+<div class="container py-5">
+    <div class="alert alert-warning">
+        <h4 class="mb-2">ไม่มีสิทธิ์เข้าถึงหน้านี้</h4>
+        <p class="mb-3">บัญชีของคุณไม่ได้รับสิทธิ์สำหรับเมนูที่ต้องการใช้งาน</p>
+        <a asp-controller="Account" asp-action="HomePage" class="btn btn-dark">กลับหน้าแรก</a>
+    </div>
+</div>

@@ -1,0 +1,107 @@
+﻿
+@{
+	Layout = null;
+	var firstError = ViewData.ModelState.Values
+		.SelectMany(v => v.Errors)
+		.Select(e => e.ErrorMessage)
+		.FirstOrDefault(m => !string.IsNullOrWhiteSpace(m));
+}
+
+@model _66033872_Yossayut_rutatip.ViewModels.AuthUserViewModel
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Register - BakeQuery</title>
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="~/css/Auth-Extended.css" />
+</head>
+<body>
+	@if (!string.IsNullOrWhiteSpace(firstError))
+	{
+		<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;">
+			<div id="authToast" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+				<div class="d-flex">
+					<div class="toast-body">@firstError</div>
+					<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+				</div>
+			</div>
+		</div>
+	}
+
+	<div class="auth-page">
+		<a href="~/" class="back-home-btn">← <span style="margin-left:8px;">Back to Home</span></a>
+
+		<div class="auth-container reverse">
+			<div class="auth-banner register-bg">
+				<div class="banner-content">
+					<h1>Join Family</h1>
+					<p>Start your journey</p>
+				</div>
+			</div>
+
+			<div class="auth-form-wrapper">
+				<div class="form-header">
+					<h2>Create Account</h2>
+					<p class="sub-text">สมัครสมาชิกใหม่ได้ง่ายๆ</p>
+				</div>
+
+				<form asp-controller="Account" asp-action="Register" method="post">
+					<div class="auth-input-group">
+						<label>ชื่อ-นามสกุล</label>
+						<div class="auth-input-field">
+							<input type="text" asp-for="FullName" placeholder="ชื่อผู้ใช้งาน" />
+						</div>
+					</div>
+
+					<div class="auth-input-group">
+						<label>อีเมล</label>
+						<div class="auth-input-field">
+							<input type="email" asp-for="Email" placeholder="name@example.com" />
+						</div>
+					</div>
+					<div class="auth-input-group">
+						<label>เบอร์โทรศัพท์</label>
+						<div class="auth-input-field">
+							<input type="tel" asp-for="Phone" placeholder="0000000000" maxlength="10" inputmode="numeric" pattern="[0-9]{1,10}" />
+						</div>
+					</div>
+
+					<div class="auth-input-group">
+						<label>รหัสผ่าน</label>
+						<div class="auth-input-field">
+							<input type="password" asp-for="Password" placeholder="ตั้งรหัสผ่าน รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" minlength="6" />
+						</div>
+					</div>
+
+					<div class="auth-input-group">
+						<label>ยืนยันรหัสผ่าน</label>
+						<div class="auth-input-field">
+							<input type="password" asp-for="ConfirmPassword" placeholder="พิมพ์รหัสผ่านอีกครั้ง" minlength="6" />
+						</div>
+					</div>
+
+					<button type="submit" class="btn-submit" style="margin-top:20px;">สมัครสมาชิก <span style="margin-left:8px;">→</span></button>
+				</form>
+
+				<div class="auth-footer">
+					<p>มีบัญชีอยู่แล้ว? <a href="~/Account/Login">เข้าสู่ระบบ</a></p>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	@if (!string.IsNullOrWhiteSpace(firstError))
+	{
+		<script>
+			(function () {
+				const toastEl = document.getElementById('authToast');
+				if (!toastEl || !window.bootstrap) return;
+				new bootstrap.Toast(toastEl, { delay: 2600 }).show();
+			})();
+		</script>
+	}
+</body>
+</html>

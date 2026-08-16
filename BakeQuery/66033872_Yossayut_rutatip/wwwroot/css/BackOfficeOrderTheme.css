@@ -1,0 +1,196 @@
+.bo-theme {
+  color: #3a2e24;
+}
+
+.bo-theme .menu-products-section,
+.bo-theme.account-management-section,
+.bo-theme .account-management-section {
+  background: #fcfaf7;
+  border: 1px solid #eee7dd;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.bo-theme .products-header,
+.bo-theme .account-header {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bo-theme .products-header h2,
+.bo-theme .account-header h1 {
+  margin: 0;
+  font-weight: 700;
+  color: #2f241c;
+}
+
+.bo-theme .products-header p,
+.bo-theme .account-header p {
+  margin: 2px 0 0;
+  color: #8f7f6f;
+  font-size: 0.82rem;
+}
+
+.bo-theme .btn-add-product,
+.bo-theme .btn-create-account,
+.bo-theme .btn-save,
+.bo-theme .btn-primary {
+  background: #c89f5f;
+  border: 1px solid #c89f5f;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.bo-theme .btn-add-product:hover,
+.bo-theme .btn-create-account:hover,
+.bo-theme .btn-save:hover,
+.bo-theme .btn-primary:hover {
+  background: #b58f56;
+  border-color: #b58f56;
+  color: #fff;
+}
+
+.bo-theme .btn-cancel,
+.bo-theme .btn-secondary {
+  border-color: #ddd3c7;
+  color: #6d5f50;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.bo-theme .filter-card,
+.bo-theme .stats-bar,
+.bo-theme .products-table-card,
+.bo-theme .table-container {
+  border: 1px solid #eee7dd;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(47, 36, 28, 0.04);
+  background: #fff;
+}
+
+.bo-theme .stats-bar {
+  margin-bottom: 14px;
+}
+
+.bo-theme .total-pill {
+  color: #7a6c5d;
+  font-size: 0.82rem;
+}
+
+.bo-theme .total-pill strong {
+  color: #2f241c;
+}
+
+.bo-theme .table-header {
+  background: #faf8f4;
+  border-bottom: 1px solid #e6ddcf;
+}
+
+.bo-theme .table-header h6 {
+  margin: 0;
+  color: #8f7f6f;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.bo-theme .products-table thead th,
+.bo-theme .account-table thead th {
+  background: #faf8f4;
+  color: #8f7f6f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e6ddcf;
+}
+
+.bo-theme .products-table tbody td,
+.bo-theme .account-table tbody td {
+  color: #4b3f34;
+  border-bottom: 1px solid #f0e9df;
+  font-size: 0.86rem;
+}
+
+.bo-theme .products-table tbody tr:hover,
+.bo-theme .account-table tbody tr:hover {
+  background: #fcfaf7;
+}
+
+.bo-theme .code-badge {
+  background: #f2e6d4;
+  color: #7a5b2f;
+  border: 1px solid #d8c6ab;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.bo-theme .status-badge.status-active {
+  color: #117a65;
+  background: #dbeee7;
+}
+
+.bo-theme .status-badge.status-out-stock {
+  color: #b42318;
+  background: #fde8e8;
+}
+
+.bo-theme .status-badge.status-banned {
+  color: #4b5563;
+  background: #eceff3;
+}
+
+.bo-theme .account-table .status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 102px;
+  padding: 7px 18px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: capitalize;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.bo-theme .modal-content {
+  border: 1px solid #e7dfd4;
+  border-radius: 14px;
+}
+
+.bo-theme .modal-header {
+  background: #2f241c;
+  color: #fff;
+  border-bottom: 1px solid #3d2f24;
+}
+
+.bo-theme .modal-title,
+.bo-theme .modal-header h5,
+.bo-theme .modal-header h2 {
+  color: #fff;
+  font-weight: 700;
+}
+
+.bo-theme .form-control,
+.bo-theme .form-select {
+  border-color: #ddd3c7;
+}
+
+.bo-theme .form-control:focus,
+.bo-theme .form-select:focus {
+  border-color: #c8a46c;
+  box-shadow: 0 0 0 0.2rem rgba(200, 159, 95, 0.2);
+}
+
+.bo-theme .pagination .page-link {
+  color: #6d5f50;
+  border-color: #ddd3c7;
+}
+
+.bo-theme .pagination .page-item.active .page-link {
+  background: #2f241c;
+  border-color: #2f241c;
+}

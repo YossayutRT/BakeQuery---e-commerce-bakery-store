@@ -1,0 +1,229 @@
+/* ===== PROMOTIONS GRID STYLES ===== */
+
+.promotions-section {
+  padding: 80px 0;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(143, 96, 56, 0.12), transparent 35%),
+    radial-gradient(circle at 90% 10%, rgba(74, 43, 23, 0.1), transparent 30%),
+    linear-gradient(180deg, #fcfaf6 0%, #f5ecdf 100%);
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f140c;
+  text-align: center;
+  margin-bottom: 10px;
+  font-family: 'Playfair Display', serif;
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  color: #6f5d4e;
+  text-align: center;
+  margin-bottom: 50px;
+  font-weight: 400;
+}
+
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 28px;
+}
+
+.promo-card {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(52, 33, 15, 0.08);
+  border: 1px solid #eadbc8;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.promo-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 18px 34px rgba(65, 42, 20, 0.17);
+  border-color: #c59461;
+}
+
+.promo-image {
+  width: 100%;
+  height: 190px;
+  overflow: hidden;
+  background: #f0e4d4;
+}
+
+.promo-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+  display: block;
+}
+
+.promo-card:hover .promo-image img {
+  transform: scale(1.06);
+}
+
+.promo-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 11px;
+}
+
+.promo-tag {
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #5d3717;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #f7e6cf, #f3d9b6);
+  padding: 5px 11px;
+  border-radius: 999px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.promo-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #332214;
+  margin: 0;
+  line-height: 1.4;
+  font-family: 'Playfair Display', serif;
+}
+
+.promo-desc {
+  font-size: 0.92rem;
+  color: #6e5b4b;
+  line-height: 1.55;
+  margin: 0;
+  min-height: 64px;
+}
+
+.promo-meta-row {
+  margin-top: 2px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.promo-meta-item {
+  border: 1px solid #ecddca;
+  border-radius: 12px;
+  padding: 9px 10px;
+  background: #fffaf4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.promo-meta-label {
+  font-size: 0.72rem;
+  color: #8f7a66;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.promo-meta-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #4b311d;
+}
+
+.promo-meta-code .promo-meta-value {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.83rem;
+}
+
+.promo-btn {
+  background: #5c3618;
+  color: #fff;
+  border: none;
+  padding: 11px 16px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.promo-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.empty-state {
+  border: 2px dashed #cfbca7;
+  border-radius: 18px;
+  padding: 42px 22px;
+  background: #fff;
+  text-align: center;
+}
+
+.promo-modal-content {
+  border-radius: 20px;
+  border: 1px solid #ead8c2;
+  overflow: hidden;
+  box-shadow: 0 18px 42px rgba(48, 28, 11, 0.22);
+}
+
+.promo-modal-header {
+  background: linear-gradient(120deg, #f8efe1 0%, #f4e3ca 100%);
+  border-bottom: 1px solid #ead8c2;
+}
+
+.promo-type-badge {
+  background: #f1d7af;
+  color: #5c3618;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+@media (max-width: 768px) {
+  .promo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .promotions-section {
+    padding: 40px 0;
+  }
+
+  .promo-body {
+    padding: 16px;
+  }
+
+  .promo-title {
+    font-size: 1rem;
+  }
+
+  .promo-desc {
+    min-height: auto;
+  }
+
+  .promo-meta-row {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

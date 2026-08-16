@@ -1,0 +1,15 @@
+@{
+   Layout = "_PublicLayout";
+}
+
+@model _66033872_Yossayut_rutatip.ViewModels.Lab9UserViewModel
+
+<div style="margin: 20px;">
+<form asp-controller="Account" asp-for="Lab9">
+        UserId<input type="text" asp-for="UserId" class="form-control"/> <br> 
+        Name<input type="text" asp-for="Name" class="form-control"/> <br>
+        Lastname<input type="text" asp-for="Lastname" class="form-control"/> <br>
+        Password<input type="text" asp-for="Password" class="form-control"/> <br>
+        <button class="btn btn-success">Submit</button>
+    </form>
+</div>

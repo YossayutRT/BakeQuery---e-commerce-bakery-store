@@ -1,0 +1,385 @@
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "Menu Products";
+}
+@model _66033872_Yossayut_rutatip.ViewModels.MenuProductsViewModel
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>จัดการสินค้า - BakeQuery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="~/css/MenuProducts.css" />
+    <link rel="stylesheet" href="~/css/BackOfficeOrderTheme.css" />
+</head>
+<body style="background-color: #f5f5f5;">
+
+    <div class="menu-products-section bo-theme">
+        
+        <div class="products-header">
+            <div class="products-header-left">
+                <h2><i class="fas fa-box-open me-2"></i>จัดการสินค้า</h2>
+                <p>เพิ่ม ลบ แก้ไข รายการเมนูเบเกอรี่</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-add-product" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="fas fa-folder-plus me-1"></i> เพิ่มหมวดหมู่
+                </button>
+                <button class="btn btn-add-product" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="fas fa-plus me-1"></i> เพิ่มสินค้าใหม่
+                </button>
+            </div>
+        </div>
+
+        <div class="filter-card">
+            <div class="card-body">
+                <form method="get" asp-controller="BackOffice" asp-action="MenuProducts">
+                    <div class="row align-items-end g-2">
+                        <div class="col-md-3">
+                            <label class="filter-label">หมวดหมู่</label>
+                            <select class="form-select" name="categoryId">
+                                <option value="">ทั้งหมด</option>
+                                @foreach (var category in Model.CategoryList)
+                                {
+                                    if (Model.SelectedCategoryId.HasValue && Model.SelectedCategoryId.Value == category.CategoryId)
+                                    {
+                                        <option value="@category.CategoryId" selected>@category.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@category.CategoryId">@category.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="filter-label">สถานะ</label>
+                            <select class="form-select" name="status">
+                                <option value="">ทั้งหมด</option>
+                                @if (string.Equals(Model.SelectedStatus, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="ACTIVE" selected>ACTIVE</option>
+                                }
+                                else
+                                {
+                                    <option value="ACTIVE">ACTIVE</option>
+                                }
+                                @if (string.Equals(Model.SelectedStatus, "OUT_OF_STOCK", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="OUT_OF_STOCK" selected>OUT_OF_STOCK</option>
+                                }
+                                else
+                                {
+                                    <option value="OUT_OF_STOCK">OUT_OF_STOCK</option>
+                                }
+                                @if (string.Equals(Model.SelectedStatus, "INACTIVE", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="INACTIVE" selected>INACTIVE</option>
+                                }
+                                else
+                                {
+                                    <option value="INACTIVE">INACTIVE</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="filter-label">เรียงลำดับ</label>
+                            <select class="form-select" name="sortBy">
+                                @if (Model.SortBy == "newest") { <option value="newest" selected>ล่าสุด</option> } else { <option value="newest">ล่าสุด</option> }
+                                @if (Model.SortBy == "oldest") { <option value="oldest" selected>เก่าสุด</option> } else { <option value="oldest">เก่าสุด</option> }
+                                @if (Model.SortBy == "name_asc") { <option value="name_asc" selected>ชื่อ A-Z</option> } else { <option value="name_asc">ชื่อ A-Z</option> }
+                                @if (Model.SortBy == "name_desc") { <option value="name_desc" selected>ชื่อ Z-A</option> } else { <option value="name_desc">ชื่อ Z-A</option> }
+                                @if (Model.SortBy == "price_asc") { <option value="price_asc" selected>ราคาต่ำ-สูง</option> } else { <option value="price_asc">ราคาต่ำ-สูง</option> }
+                                @if (Model.SortBy == "price_desc") { <option value="price_desc" selected>ราคาสูง-ต่ำ</option> } else { <option value="price_desc">ราคาสูง-ต่ำ</option> }
+                                @if (Model.SortBy == "stock_desc") { <option value="stock_desc" selected>สต็อกมาก-น้อย</option> } else { <option value="stock_desc">สต็อกมาก-น้อย</option> }
+                                @if (Model.SortBy == "stock_asc") { <option value="stock_asc" selected>สต็อกน้อย-มาก</option> } else { <option value="stock_asc">สต็อกน้อย-มาก</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-4 ms-auto">
+                            <label class="filter-label">ค้นหา</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control search-input" name="keyword" value="@Model.Keyword" placeholder="ชื่อสินค้า หรือ รหัส...">
+                                <button class="search-btn" type="submit"><i class="fas fa-search"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex gap-2 mt-2">
+                            <button type="submit" class="btn btn-sm btn-add-product">ใช้ตัวกรอง</button>
+                            <a asp-controller="BackOffice" asp-action="MenuProducts" class="btn btn-sm btn-outline-secondary">ล้างตัวกรอง</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="products-table-card">
+            <div class="table-header">
+                <h6>รายการสินค้าทั้งหมด (@Model.ProductList.Count รายการ)</h6>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th class="text-center" width="5%">รูปภาพ</th>
+                                <th width="10%">รหัส</th>
+                                <th width="25%">ชื่อสินค้า</th>
+                                <th width="15%">หมวดหมู่</th>
+                                <th class="text-end" width="10%">ราคา</th>
+                                <th class="text-center" width="10%">คงเหลือ</th>
+                                <th class="text-center" width="10%">สถานะ</th>
+                                <th class="text-center" width="15%">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ProductList)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        <img src="@(string.IsNullOrWhiteSpace(item.ImageUrl) ? "https://via.placeholder.com/50" : item.ImageUrl)" class="product-image" width="50" height="50" alt="@item.Name">
+                                    </td>
+                                    <td><span class="code-badge">@item.ProductCode</span></td>
+                                    <td>
+                                        <div class="product-name">@item.Name</div>
+                                    </td>
+                                    <td>@item.Category.Name</td>
+                                    <td class="text-end product-price">฿@item.Price.ToString("N2")</td>
+                                    <td class="text-center">
+                                        @if(item.StockQty <= 10) {
+                                            <span class="stock-low">@item.StockQty</span> } else {
+                                            <span class="stock-normal">@item.StockQty</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if(item.Status == "ACTIVE") {
+                                            <span class="status-badge status-active">Active</span>
+                                        } else {
+                                            <span class="status-badge status-out-stock">Out of Stock</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex justify-content-center gap-2">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editProductModal"
+                                                    data-product-id="@item.ProductId"
+                                                    data-category-id="@item.CategoryId"
+                                                    data-product-name="@item.Name"
+                                                    data-price="@item.Price"
+                                                    data-stock-qty="@item.StockQty"
+                                                    data-image-url="@item.ImageUrl"
+                                                    data-description="@item.Description"
+                                                    data-status="@item.Status">
+                                                Edit
+                                            </button>
+                                            <a class="btn btn-sm btn-outline-danger"
+                                               asp-controller="BackOffice"
+                                               asp-action="DeleteProduct"
+                                               asp-route-productId="@item.ProductId"
+                                               onclick="return confirm('ยืนยันการลบสินค้านี้ใช่ไหม?');">
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="table-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        <li class="page-item disabled"><a class="page-link" href="#">ก่อนหน้า</a></li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">ถัดไป</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bo-theme" id="addProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>เพิ่มสินค้าใหม่</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm" asp-controller="BackOffice" asp-action="MenuProducts" method="post" enctype="multipart/form-data">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">ชื่อสินค้า <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="ProductForm.Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">หมวดหมู่</label>
+                                <select class="form-select" asp-for="ProductForm.CategoryId">
+                                    @foreach (var category in Model.CategoryList)
+                                    {
+                                        <option value="@category.CategoryId">@category.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">รหัสสินค้า</label>
+                                <input type="text" class="form-control" placeholder="AUTO">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" asp-for="ProductForm.Price" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">จำนวนสต็อก</label>
+                                <input type="number" class="form-control" asp-for="ProductForm.StockQty" min="0" value="0">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">ลิงก์รูปภาพ (URL หรือ path เช่น /uploads/...)</label>
+                                <input type="text" class="form-control" asp-for="ProductForm.ImageUrl" placeholder="https://... หรือ /uploads/...">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">หรือ อัปโหลดรูปภาพ</label>
+                                <input type="file" class="form-control" asp-for="ProductForm.ImageFile" accept="image/*">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">รายละเอียด</label>
+                                <textarea class="form-control" asp-for="ProductForm.Description" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-save" form="addProductForm">บันทึกข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bo-theme" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>เพิ่มหมวดหมู่เมนู</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCategoryForm" asp-controller="BackOffice" asp-action="CreateCategory" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">ชื่อหมวดหมู่ <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" asp-for="CategoryForm.Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">รายละเอียด</label>
+                            <textarea class="form-control" asp-for="CategoryForm.Description" rows="3"></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="CategoryForm.IsActive" />
+                            <label class="form-check-label" asp-for="CategoryForm.IsActive">เปิดใช้งานทันที</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-save" form="addCategoryForm">บันทึกข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade bo-theme" id="editProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-pen-to-square me-2"></i>แก้ไขสินค้า</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm" asp-controller="BackOffice" asp-action="UpdateProduct" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="EditProductForm.ProductId" id="editProductId" />
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">ชื่อสินค้า <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" asp-for="EditProductForm.Name" id="editProductName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">หมวดหมู่</label>
+                                <select class="form-select" asp-for="EditProductForm.CategoryId" id="editCategoryId">
+                                    @foreach (var category in Model.CategoryList)
+                                    {
+                                        <option value="@category.CategoryId">@category.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">ราคา (บาท) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" asp-for="EditProductForm.Price" id="editProductPrice" min="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">จำนวนสต็อก</label>
+                                <input type="number" class="form-control" asp-for="EditProductForm.StockQty" id="editProductStockQty" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">สถานะ</label>
+                                <select class="form-select" asp-for="EditProductForm.Status" id="editProductStatus">
+                                    <option value="ACTIVE">ACTIVE</option>
+                                    <option value="OUT_OF_STOCK">OUT_OF_STOCK</option>
+                                    <option value="INACTIVE">INACTIVE</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">ลิงก์รูปภาพ (URL หรือ path เช่น /uploads/...)</label>
+                                <input type="text" class="form-control" asp-for="EditProductForm.ImageUrl" id="editProductImageUrl" placeholder="https://... หรือ /uploads/...">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">หรือ อัปโหลดรูปภาพใหม่</label>
+                                <input type="file" class="form-control" asp-for="EditProductForm.ImageFile" accept="image/*">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">รายละเอียด</label>
+                                <textarea class="form-control" asp-for="EditProductForm.Description" id="editProductDescription" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-save" form="editProductForm">อัปเดตข้อมูล</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const editModalElement = document.getElementById("editProductModal");
+            if (!editModalElement) {
+                return;
+            }
+
+            editModalElement.addEventListener("show.bs.modal", function (event) {
+                const button = event.relatedTarget;
+                if (!button) {
+                    return;
+                }
+
+                document.getElementById("editProductId").value = button.getAttribute("data-product-id") || "";
+                document.getElementById("editCategoryId").value = button.getAttribute("data-category-id") || "";
+                document.getElementById("editProductName").value = button.getAttribute("data-product-name") || "";
+                document.getElementById("editProductPrice").value = button.getAttribute("data-price") || "0";
+                document.getElementById("editProductStockQty").value = button.getAttribute("data-stock-qty") || "0";
+                document.getElementById("editProductImageUrl").value = button.getAttribute("data-image-url") || "";
+                document.getElementById("editProductDescription").value = button.getAttribute("data-description") || "";
+                document.getElementById("editProductStatus").value = button.getAttribute("data-status") || "ACTIVE";
+            });
+        });
+    </script>
+</body>
+</html>

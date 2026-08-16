@@ -1,0 +1,300 @@
+/* ===== PROMOTIONS CAROUSEL SECTION ===== */
+.promotions-carousel-section {
+  padding: 80px 0;
+  background: linear-gradient(135deg, #f9f7f4 0%, #ffffff 100%);
+  position: relative;
+}
+
+.promotions-carousel-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 1100px);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(153, 117, 76, 0) 0%, rgba(153, 117, 76, 0.7) 50%, rgba(153, 117, 76, 0) 100%);
+}
+
+.promotions-carousel-section .section-title {
+  color: #3c2719;
+  letter-spacing: 0.3px;
+}
+
+.promotions-carousel-section .section-subtitle {
+  color: #735a46;
+}
+
+#promotionsCarousel {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Card container */
+.promo-carousel-card {
+  display: flex;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(107, 63, 43, 0.2);
+  box-shadow: 0 12px 36px rgba(44, 27, 15, 0.14);
+  margin: 20px auto;
+  max-width: 1060px;
+  height: 380px;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.promo-carousel-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 48px rgba(44, 27, 15, 0.2);
+}
+
+/* Image section */
+.promo-carousel-image {
+  flex: 0 0 60%;
+  position: relative;
+  overflow: hidden;
+}
+
+.promo-carousel-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.promo-carousel-card:hover .promo-carousel-image img {
+  transform: scale(1.08);
+}
+
+/* Content section */
+.promo-carousel-content {
+  flex: 1;
+  padding: 45px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+}
+
+/* Tag */
+.promo-carousel-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #7d4b2f, #5d3823);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 15px;
+  align-self: flex-start;
+}
+
+/* Title */
+.promo-carousel-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b2718;
+  margin-bottom: 15px;
+  font-family: 'Playfair Display', serif;
+  line-height: 1.2;
+}
+
+/* Description */
+.promo-carousel-desc {
+  font-size: 1rem;
+  color: #6a5545;
+  line-height: 1.7;
+  margin-bottom: 25px;
+  font-weight: 300;
+}
+
+/* Button */
+.promo-carousel-btn {
+  background: linear-gradient(135deg, #7d4b2f, #5d3823);
+  color: white;
+  border: none;
+  padding: 13px 32px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  align-self: flex-start;
+  box-shadow: 0 6px 16px rgba(107, 63, 43, 0.28);
+}
+
+.promo-carousel-btn:hover {
+  background: linear-gradient(135deg, #6a3f28, #4d2e1d);
+  transform: translateX(5px);
+  box-shadow: 0 6px 18px rgba(107, 63, 43, 0.35);
+}
+
+
+/* Indicators */
+.carousel-indicators {
+  margin-bottom: 0;
+  margin-top: 30px;
+  position: static;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d5c3b1;
+  border: none;
+  opacity: 1;
+  transition: all 0.3s ease;
+  margin: 0 6px;
+}
+
+.carousel-indicators .active {
+  background: #7d4b2f;
+  width: 36px;
+  border-radius: 6px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+  .promo-carousel-card {
+    flex-direction: column;
+    height: auto;
+    max-width: 600px;
+  }
+
+  .promo-carousel-image {
+    flex: 0 0 280px;
+    height: 280px;
+  }
+
+  .promo-carousel-content {
+    padding: 35px 30px;
+  }
+
+  .promo-carousel-title {
+    font-size: 1.7rem;
+  }
+
+  .promo-carousel-desc {
+    font-size: 0.95rem;
+  }
+
+  .carousel-control-prev {
+    left: 10px;
+  }
+
+  .carousel-control-next {
+    right: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .promotions-carousel-section {
+    padding: 60px 0;
+  }
+
+  .promo-carousel-image {
+    flex: 0 0 240px;
+    height: 240px;
+  }
+
+  .promo-carousel-content {
+    padding: 30px 25px;
+  }
+
+  .promo-carousel-title {
+    font-size: 1.5rem;
+  }
+
+  .promo-carousel-desc {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .promo-carousel-btn {
+    padding: 11px 26px;
+    font-size: 0.9rem;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+@media (max-width: 576px) {
+  .promotions-carousel-section {
+    padding: 50px 0;
+  }
+
+  #promotionsCarousel {
+    padding: 0 10px;
+  }
+
+  .promo-carousel-card {
+    margin: 15px auto;
+    border-radius: 15px;
+  }
+
+  .promo-carousel-image {
+    flex: 0 0 200px;
+    height: 200px;
+  }
+
+  .promo-carousel-content {
+    padding: 25px 20px;
+  }
+
+  .promo-carousel-tag {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+
+  .promo-carousel-title {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .promo-carousel-desc {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 18px;
+  }
+
+  .promo-carousel-btn {
+    padding: 10px 22px;
+    font-size: 0.85rem;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+    width: 40px;
+    height: 40px;
+  }
+
+  .carousel-control-prev {
+    left: 5px;
+  }
+
+  .carousel-control-next {
+    right: 5px;
+  }
+
+  .carousel-indicators [data-bs-target] {
+    width: 10px;
+    height: 10px;
+    margin: 0 4px;
+  }
+
+  .carousel-indicators .active {
+    width: 28px;
+  }
+}

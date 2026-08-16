@@ -1,0 +1,540 @@
+﻿@model _66033872_Yossayut_rutatip.ViewModels.OrderManagementViewModel
+
+@{
+    Layout = "_BackOfficeLayout";
+    ViewData["Title"] = "Orders";
+    var selectedTimeFilter = (Model.SelectedTimeFilter ?? "day").ToLowerInvariant();
+
+    Func<string, string> statusClass = status => status.ToUpperInvariant() switch
+    {
+        "PENDING" => "st pending",
+        "PAID" => "st paid",
+        "PREPARING" => "st preparing",
+        "SHIPPING" => "st shipping",
+        "DELIVERED" => "st delivered",
+        "CANCELLED" => "st cancelled",
+        _ => "st"
+    };
+}
+
+<section class="orders-shell">
+    <div class="orders-hero mb-3">
+        <div>
+            <h4 class="mb-1">Order Management</h4>
+        </div>
+        <div class="orders-count">@Model.Orders.Count รายการ</div>
+    </div>
+
+    <div class="order-filter-panel mb-3">
+        <form asp-controller="BackOffice" asp-action="OrderMenu" method="get" class="order-filter-form">
+            <div class="order-filter-field">
+                <label for="timeFilter" class="order-filter-label">ช่วงเวลา</label>
+                <select id="timeFilter" name="timeFilter" class="form-select">
+                    <option value="day" selected="@(selectedTimeFilter == "day" ? "selected" : null)">รายวัน</option>
+                    <option value="week" selected="@(selectedTimeFilter == "week" ? "selected" : null)">รายสัปดาห์</option>
+                    <option value="month" selected="@(selectedTimeFilter == "month" ? "selected" : null)">รายเดือน</option>
+                    <option value="year" selected="@(selectedTimeFilter == "year" ? "selected" : null)">รายปี</option>
+                </select>
+            </div>
+
+            <div class="order-filter-actions">
+                <button type="submit" class="btn order-filter-apply">Filter</button>
+                <a asp-controller="BackOffice" asp-action="OrderMenu" class="btn order-filter-reset">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="alert alert-light border">ยังไม่มีคำสั่งซื้อในระบบ</div>
+    }
+    else
+    {
+        <div class="orders-stack">
+            @foreach (var order in Model.Orders)
+            {
+                <article class="order-card">
+                    <div class="order-main">
+                        <div class="order-head">
+                            <div>
+                                <div class="order-no">@order.OrderNo</div>
+                                <div class="order-time">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                            <div class="text-end">
+                                <span class="@statusClass(order.OrderStatus)">@order.OrderStatus</span>
+                                <div class="payment mt-1">Payment: @order.PaymentStatus</div>
+                                <button type="button" class="btn btn-sm bo-order-toggle mt-2" data-bo-order-toggle aria-expanded="true">
+                                    <span class="bo-order-toggle-label">ซ่อนรายละเอียด</span>
+                                    <span class="bo-order-toggle-icon">^</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="order-grid">
+                            <div>
+                                <div class="sec-title">ลูกค้า</div>
+                                <div class="fw-semibold">@order.CustomerName</div>
+                                <div class="small text-muted">@order.CustomerPhone</div>
+                                <div class="small text-muted" style="white-space: pre-line;">@order.CustomerAddress</div>
+                            </div>
+                            <div>
+                                <div class="sec-title">รายการสินค้า</div>
+                                <div class="items-wrap">
+                                    @foreach (var item in order.ItemNames)
+                                    {
+                                        <div class="item-line">@item</div>
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <div class="sec-title">ยอดรวม</div>
+                                <div class="total">฿@order.GrandTotal.ToString("N2")</div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(order.CustomerNote))
+                        {
+                            <div class="note-box mt-2">
+                                <div class="sec-title">หมายเหตุจากลูกค้า</div>
+                                <div style="white-space:pre-line;">@order.CustomerNote</div>
+                            </div>
+                        }
+
+                        <div class="note-box mt-2">
+                            <div class="sec-title">หลักฐานการชำระเงิน</div>
+                            @if (order.LatestPaymentProof == null)
+                            {
+                                <div class="small text-muted">ยังไม่มีการแนบหลักฐาน</div>
+                            }
+                            else
+                            {
+                                <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center">
+                                    <a href="@order.LatestPaymentProof.FilePath" target="_blank" class="small fw-semibold">@order.LatestPaymentProof.OriginalFileName</a>
+                                    <span class="proof-badge">@order.LatestPaymentProof.VerificationStatus</span>
+                                </div>
+                                <div class="small text-muted">@order.LatestPaymentProof.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                @if (!string.IsNullOrWhiteSpace(order.LatestPaymentProof.UploadNote))
+                                {
+                                    <div class="small mt-1">@order.LatestPaymentProof.UploadNote</div>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <div class="order-actions">
+                        <div class="actions-title">จัดการออเดอร์</div>
+
+                        <form asp-controller="BackOffice" asp-action="UpdateOrderStatus" method="post" class="mb-3">
+                            <input type="hidden" name="orderId" value="@order.OrderId" />
+                            <input type="hidden" name="timeFilter" value="@Model.SelectedTimeFilter" />
+                            <label class="form-label small text-muted mb-1">เปลี่ยนสถานะ</label>
+                            <div class="d-flex gap-2">
+                                <select name="orderStatus" class="form-select form-select-sm">
+                                    @foreach (var status in Model.OrderStatuses)
+                                    {
+                                        if (status == order.OrderStatus)
+                                        {
+                                            <option value="@status" selected>@status</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-dark">Save</button>
+                            </div>
+                        </form>
+
+                        <form asp-controller="BackOffice" asp-action="UpdatePaymentStatus" method="post" class="mb-3">
+                            <input type="hidden" name="orderId" value="@order.OrderId" />
+                            <input type="hidden" name="timeFilter" value="@Model.SelectedTimeFilter" />
+                            <label class="form-label small text-muted mb-1">สถานะการจ่ายเงิน</label>
+                            <div class="d-flex gap-2">
+                                <select name="paymentStatus" class="form-select form-select-sm">
+                                    @foreach (var status in Model.PaymentStatuses)
+                                    {
+                                        if (status == order.PaymentStatus)
+                                        {
+                                            <option value="@status" selected>@status</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-success">Save</button>
+                            </div>
+                        </form>
+
+                        <form asp-controller="BackOffice" asp-action="ReplyOrder" method="post">
+                            <input type="hidden" name="orderId" value="@order.OrderId" />
+                            <input type="hidden" name="timeFilter" value="@Model.SelectedTimeFilter" />
+                            <label class="form-label small text-muted mb-1">ตอบกลับลูกค้า</label>
+                            <textarea name="staffReply" rows="3" class="form-control form-control-sm mb-2" placeholder="พิมพ์ข้อความตอบกลับ..."></textarea>
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">ส่งข้อความ</button>
+                        </form>
+
+                        <div class="reply-log mt-3">
+                            <div class="sec-title mb-2">ประวัติการตอบกลับ</div>
+                            @if (order.Replies.Count == 0)
+                            {
+                                <div class="small text-muted">ยังไม่มีข้อความตอบกลับ</div>
+                            }
+                            else
+                            {
+                                @foreach (var reply in order.Replies)
+                                {
+                                    <div class="reply-row">
+                                        <div class="d-flex justify-content-between flex-wrap gap-1">
+                                            <div class="fw-semibold small">@reply.RepliedByName</div>
+                                            <div class="small text-muted">@reply.CreatedAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                        </div>
+                                        <div class="small">@reply.ReplyMessage</div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+<style>
+    .orders-shell {
+        color: #3b3024;
+    }
+
+    .orders-hero {
+        border: 1px solid #eadfce;
+        background: linear-gradient(120deg, #fff8ef 0%, #f4eadf 100%);
+        border-radius: 14px;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .orders-count {
+        background: #2d2318;
+        color: #f1e0ca;
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+    }
+
+    .order-filter-panel {
+        border: 1px solid #eadfce;
+        border-radius: 14px;
+        background: #fff;
+        padding: 12px 14px;
+    }
+
+    .order-filter-form {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .order-filter-field {
+        min-width: 190px;
+    }
+
+    .order-filter-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #5e4e3d;
+        margin-bottom: 4px;
+    }
+
+    .order-filter-field .form-select {
+        border-color: #d9cebe;
+        border-radius: 8px;
+        min-height: 38px;
+    }
+
+    .order-filter-field .form-select:focus {
+        border-color: #c8a46c;
+        box-shadow: 0 0 0 0.2rem rgba(200, 159, 95, 0.2);
+    }
+
+    .order-filter-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .order-filter-apply {
+        background: #c89f5f;
+        border: 1px solid #c89f5f;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
+        min-height: 38px;
+        padding: 0 16px;
+    }
+
+    .order-filter-apply:hover {
+        background: #b58f56;
+        border-color: #b58f56;
+        color: #fff;
+    }
+
+    .order-filter-reset {
+        border: 1px solid #ddd3c7;
+        color: #6d5f50;
+        background: #fff;
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 38px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .order-filter-reset:hover {
+        background: #f8f4ee;
+        color: #594a3a;
+        border-color: #d4c8bb;
+    }
+
+    .orders-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .order-card {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        border: 1px solid #e7ddcf;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 8px 20px rgba(41, 30, 18, 0.06);
+    }
+
+    .order-main {
+        padding: 14px 16px;
+        background: #fff;
+    }
+
+    .order-actions {
+        padding: 14px 16px;
+        background: #fbf8f3;
+        border-left: 1px solid #ece3d6;
+    }
+
+    .order-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .order-no {
+        font-size: 1.03rem;
+        font-weight: 800;
+    }
+
+    .order-time {
+        font-size: 0.8rem;
+        color: #8a7a68;
+    }
+
+    .payment {
+        font-size: 0.78rem;
+        color: #8a7a68;
+    }
+
+    .bo-order-toggle {
+        border-radius: 999px;
+        border: 1px solid #d7c2a2;
+        background: linear-gradient(140deg, #fffdf9 0%, #f8ecd9 100%);
+        color: #5e4426;
+        font-size: 0.72rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 10px;
+        line-height: 1.2;
+    }
+
+    .bo-order-toggle:hover {
+        color: #4e371f;
+        border-color: #c09f74;
+        background: #f8e9d0;
+    }
+
+    .bo-order-toggle-icon {
+        font-size: 0.64rem;
+        transition: transform 0.2s ease;
+        display: inline-block;
+    }
+
+    .bo-order-toggle.is-collapsed .bo-order-toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .order-card.is-collapsed .order-main > :not(.order-head) {
+        display: none;
+    }
+
+    .order-card.is-collapsed .order-actions {
+        display: none;
+    }
+
+    .order-card.is-collapsed .order-main {
+        padding-bottom: 12px;
+    }
+
+    .order-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr .6fr;
+        gap: 14px;
+        margin-bottom: 8px;
+    }
+
+    .sec-title {
+        font-size: 0.74rem;
+        color: #9a7e59;
+        font-weight: 700;
+        letter-spacing: .2px;
+        margin-bottom: 4px;
+    }
+
+    .items-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .item-line {
+        font-size: 0.86rem;
+    }
+
+    .total {
+        font-size: 1.02rem;
+        font-weight: 800;
+    }
+
+    .note-box {
+        border: 1px solid #e9decd;
+        background: #fffcf6;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: .84rem;
+    }
+
+    .proof-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        border-radius: 999px;
+        background: #efe5d8;
+        color: #7f6036;
+        padding: 3px 8px;
+    }
+
+    .actions-title {
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .reply-log {
+        border: 1px solid #e7ddcf;
+        border-radius: 10px;
+        background: #fff;
+        padding: 8px 10px;
+        max-height: 185px;
+        overflow: auto;
+    }
+
+    .reply-row + .reply-row {
+        border-top: 1px dashed #ebdfd1;
+        margin-top: 8px;
+        padding-top: 8px;
+    }
+
+    .st {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.68rem;
+        font-weight: 700;
+    }
+
+    .st.pending { color: #8b5f1a; background: #fff0d4; }
+    .st.paid { color: #245f98; background: #e7f2ff; }
+    .st.preparing { color: #8c6a1a; background: #fff2d9; }
+    .st.shipping { color: #1d6e45; background: #e8f7ef; }
+    .st.delivered { color: #106247; background: #dcf4ea; }
+    .st.cancelled { color: #a0413f; background: #fde8e8; }
+
+    @@media (max-width: 1200px) {
+        .order-card {
+            grid-template-columns: 1fr;
+        }
+
+        .order-actions {
+            border-left: 0;
+            border-top: 1px solid #ece3d6;
+        }
+
+        .order-filter-form {
+            align-items: stretch;
+        }
+
+        .order-filter-field,
+        .order-filter-actions {
+            width: 100%;
+        }
+
+        .order-filter-actions .btn {
+            flex: 1 1 0;
+            justify-content: center;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .order-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        const buttons = document.querySelectorAll('[data-bo-order-toggle]');
+        if (!buttons.length) return;
+
+        const setState = function (button, expanded) {
+            const label = button.querySelector('.bo-order-toggle-label');
+            if (label) {
+                label.textContent = expanded ? 'ซ่อนรายละเอียด' : 'ดูรายละเอียด';
+            }
+            button.classList.toggle('is-collapsed', !expanded);
+            button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        };
+
+        buttons.forEach(function (button) {
+            setState(button, true);
+            button.addEventListener('click', function () {
+                const card = button.closest('.order-card');
+                if (!card) return;
+
+                const expanded = button.getAttribute('aria-expanded') === 'true';
+                const nextExpanded = !expanded;
+                card.classList.toggle('is-collapsed', !nextExpanded);
+                setState(button, nextExpanded);
+            });
+        });
+    })();
+</script>

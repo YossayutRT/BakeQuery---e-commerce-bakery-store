@@ -1,0 +1,420 @@
+
+CREATE TABLE roles (
+    role_id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    role_name VARCHAR(30) NOT NULL,
+    description VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (role_id),
+    UNIQUE KEY uq_roles_role_name (role_name)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO roles (role_name, description) VALUES
+('Manager', 'Manage overall business and reporting'),
+('Admin', 'Manage users and system configuration'),
+('Staff', 'Manage daily operations'),
+('Customer', 'End customer account');
+
+-- 2) users (มี user_code เดียวตามที่ต้องการ)
+CREATE TABLE users (
+    user_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_code VARCHAR(20) NOT NULL,          -- เช่น USR000001
+    role_id TINYINT UNSIGNED NOT NULL,
+    email VARCHAR(120) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    full_name VARCHAR(120) NOT NULL,
+    phone VARCHAR(20) NULL,
+    status ENUM('ACTIVE','INACTIVE','BANNED') NOT NULL DEFAULT 'ACTIVE',
+    last_login_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id),
+    UNIQUE KEY uq_users_user_code (user_code),
+    UNIQUE KEY uq_users_email (email),
+    KEY idx_users_role_id (role_id),
+    CONSTRAINT fk_users_role
+        FOREIGN KEY (role_id) REFERENCES roles(role_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+-- 3) user_addresses (แยกที่อยู่จัดส่งออกจาก users)
+CREATE TABLE user_addresses (
+    address_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    recipient_name VARCHAR(120) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    line1 VARCHAR(255) NOT NULL,
+    line2 VARCHAR(255) NULL,
+    district VARCHAR(120) NULL,
+    province VARCHAR(120) NOT NULL,
+    postal_code VARCHAR(10) NOT NULL,
+    country VARCHAR(80) NOT NULL DEFAULT 'Thailand',
+    is_default TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (address_id),
+    KEY idx_user_addresses_user_id (user_id),
+    CONSTRAINT fk_user_addresses_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+  //Product
+  -- 1) categories
+CREATE TABLE categories (
+    category_id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    category_code VARCHAR(20) NOT NULL,      -- เช่น CAT001
+    name VARCHAR(80) NOT NULL,               -- Bread, Cake, Pastry...
+    description VARCHAR(255) NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (category_id),
+    UNIQUE KEY uq_categories_code (category_code),
+    UNIQUE KEY uq_categories_name (name)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO categories (category_code, name, sort_order) VALUES
+('CAT001','Bread',1),
+('CAT002','Cake',2),
+('CAT003','Pastry',3),
+('CAT004','Cookie',4),
+('CAT005','Beverage',5);
+
+-- 2) products
+CREATE TABLE products (
+    product_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_code VARCHAR(20) NOT NULL,       -- เช่น P001
+    category_id SMALLINT UNSIGNED NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    description TEXT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    stock_qty INT NOT NULL DEFAULT 0,
+    image_url VARCHAR(500) NULL,
+    status ENUM('ACTIVE','OUT_OF_STOCK','INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+    created_by BIGINT UNSIGNED NULL,         -- อ้างผู้สร้าง (admin/staff)
+    updated_by BIGINT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (product_id),
+    UNIQUE KEY uq_products_code (product_code),
+    KEY idx_products_category_id (category_id),
+    KEY idx_products_status (status),
+    CONSTRAINT fk_products_category
+        FOREIGN KEY (category_id) REFERENCES categories(category_id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_products_created_by
+        FOREIGN KEY (created_by) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT fk_products_updated_by
+        FOREIGN KEY (updated_by) REFERENCES users(user_id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
+    CONSTRAINT chk_products_price_non_negative CHECK (price >= 0),
+    CONSTRAINT chk_products_stock_non_negative CHECK (stock_qty >= 0)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+  -- =========================================================
+-- PART B: Promotions / Cart / Orders / Stock
+-- (Run after roles, users, user_addresses, categories, products)
+-- =========================================================
+
+-- 1) Promotions
+CREATE TABLE promotions (
+    promotion_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    promo_code VARCHAR(30) NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    promo_type ENUM('PERCENT','FIXED','BUY_X_GET_Y','MEMBER') NOT NULL,
+    description TEXT NULL,
+    start_at DATETIME NOT NULL,
+    end_at DATETIME NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by BIGINT UNSIGNED NULL,
+    updated_by BIGINT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (promotion_id),
+    UNIQUE KEY uq_promotions_code (promo_code),
+    KEY idx_promotions_active_period (is_active, start_at, end_at),
+    CONSTRAINT fk_promotions_created_by
+        FOREIGN KEY (created_by) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT fk_promotions_updated_by
+        FOREIGN KEY (updated_by) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT chk_promotions_period CHECK (end_at > start_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE promotion_rules (
+    rule_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    promotion_id BIGINT UNSIGNED NOT NULL,
+    min_order_amount DECIMAL(10,2) NULL,
+    discount_percent DECIMAL(5,2) NULL,
+    discount_amount DECIMAL(10,2) NULL,
+    buy_qty INT NULL,
+    free_qty INT NULL,
+    free_product_id BIGINT UNSIGNED NULL,
+    member_only TINYINT(1) NOT NULL DEFAULT 0,
+    max_redemptions INT NULL,
+    max_redemptions_per_user INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (rule_id),
+    KEY idx_promotion_rules_promotion_id (promotion_id),
+    KEY idx_promotion_rules_free_product_id (free_product_id),
+    CONSTRAINT fk_promotion_rules_promotion
+        FOREIGN KEY (promotion_id) REFERENCES promotions(promotion_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_promotion_rules_free_product
+        FOREIGN KEY (free_product_id) REFERENCES products(product_id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT chk_promotion_rules_min_amount CHECK (min_order_amount IS NULL OR min_order_amount >= 0),
+    CONSTRAINT chk_promotion_rules_discount_percent CHECK (discount_percent IS NULL OR (discount_percent >= 0 AND discount_percent <= 100)),
+    CONSTRAINT chk_promotion_rules_discount_amount CHECK (discount_amount IS NULL OR discount_amount >= 0),
+    CONSTRAINT chk_promotion_rules_buy_qty CHECK (buy_qty IS NULL OR buy_qty > 0),
+    CONSTRAINT chk_promotion_rules_free_qty CHECK (free_qty IS NULL OR free_qty > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 2) Cart
+CREATE TABLE carts (
+    cart_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id BIGINT UNSIGNED NOT NULL,
+    status ENUM('ACTIVE','CHECKED_OUT','ABANDONED') NOT NULL DEFAULT 'ACTIVE',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (cart_id),
+    KEY idx_carts_user_status (user_id, status),
+    CONSTRAINT fk_carts_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE cart_items (
+    cart_item_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    cart_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    qty INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    line_total DECIMAL(10,2) AS (qty * unit_price) STORED,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (cart_item_id),
+    UNIQUE KEY uq_cart_items_cart_product (cart_id, product_id),
+    KEY idx_cart_items_product_id (product_id),
+    CONSTRAINT fk_cart_items_cart
+        FOREIGN KEY (cart_id) REFERENCES carts(cart_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_cart_items_product
+        FOREIGN KEY (product_id) REFERENCES products(product_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_cart_items_qty CHECK (qty > 0),
+    CONSTRAINT chk_cart_items_unit_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 3) Orders
+CREATE TABLE orders (
+    order_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_no VARCHAR(30) NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    address_id BIGINT UNSIGNED NOT NULL,
+    promotion_id BIGINT UNSIGNED NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    discount_total DECIMAL(10,2) NOT NULL DEFAULT 0,
+    shipping_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+    grand_total DECIMAL(10,2) NOT NULL,
+    order_status ENUM('PENDING','PAID','PREPARING','SHIPPING','DELIVERED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+    payment_status ENUM('UNPAID','PAID','REFUNDED') NOT NULL DEFAULT 'UNPAID',
+    notes VARCHAR(500) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (order_id),
+    UNIQUE KEY uq_orders_order_no (order_no),
+    KEY idx_orders_user_id (user_id),
+    KEY idx_orders_status_created (order_status, created_at),
+    KEY idx_orders_promotion_id (promotion_id),
+    CONSTRAINT fk_orders_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_orders_address
+        FOREIGN KEY (address_id) REFERENCES user_addresses(address_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_orders_promotion
+        FOREIGN KEY (promotion_id) REFERENCES promotions(promotion_id)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    CONSTRAINT chk_orders_subtotal CHECK (subtotal >= 0),
+    CONSTRAINT chk_orders_discount_total CHECK (discount_total >= 0),
+    CONSTRAINT chk_orders_shipping_fee CHECK (shipping_fee >= 0),
+    CONSTRAINT chk_orders_grand_total CHECK (grand_total >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE order_items (
+    order_item_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    qty INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    line_total DECIMAL(10,2) AS (qty * unit_price) STORED,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (order_item_id),
+    KEY idx_order_items_order_id (order_id),
+    KEY idx_order_items_product_id (product_id),
+    CONSTRAINT fk_order_items_order
+        FOREIGN KEY (order_id) REFERENCES orders(order_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_order_items_product
+        FOREIGN KEY (product_id) REFERENCES products(product_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT chk_order_items_qty CHECK (qty > 0),
+    CONSTRAINT chk_order_items_unit_price CHECK (unit_price >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 4) Promotion usage history
+CREATE TABLE promotion_redemptions (
+    redemption_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    promotion_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED NOT NULL,
+    discount_value DECIMAL(10,2) NOT NULL DEFAULT 0,
+    redeemed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (redemption_id),
+    KEY idx_promotion_redemptions_promotion_id (promotion_id),
+    KEY idx_promotion_redemptions_user_id (user_id),
+    KEY idx_promotion_redemptions_order_id (order_id),
+    CONSTRAINT fk_promotion_redemptions_promotion
+        FOREIGN KEY (promotion_id) REFERENCES promotions(promotion_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_promotion_redemptions_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_promotion_redemptions_order
+        FOREIGN KEY (order_id) REFERENCES orders(order_id)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT chk_promotion_redemptions_discount_value CHECK (discount_value >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- 5) Stock movement history
+CREATE TABLE inventory_transactions (
+    transaction_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    product_id BIGINT UNSIGNED NOT NULL,
+    transaction_type ENUM('IN','OUT','ADJUST') NOT NULL,
+    qty_change INT NOT NULL,
+    reference_type ENUM('ORDER','MANUAL','RESTOCK') NOT NULL,
+    reference_id BIGINT UNSIGNED NULL,
+    note VARCHAR(255) NULL,
+    created_by BIGINT UNSIGNED NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (transaction_id),
+    KEY idx_inventory_transactions_product_id (product_id),
+    KEY idx_inventory_transactions_created_at (created_at),
+    CONSTRAINT fk_inventory_transactions_product
+        FOREIGN KEY (product_id) REFERENCES products(product_id)
+        ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_inventory_transactions_created_by
+        FOREIGN KEY (created_by) REFERENCES users(user_id)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+
+START TRANSACTION;
+
+-- =========================================
+-- 1) Promotions
+-- =========================================
+INSERT INTO promotions
+(promo_code, name, promo_type, description, start_at, end_at, is_active, created_by, updated_by)
+VALUES
+('PR001', 'Happiness in Bulk', 'BUY_X_GET_Y',
+ 'ยิ่งเยอะยิ่งสุข! ซื้อเบเกอรี่ครบ 10 ชิ้น รับฟรีทันที 1 ชิ้น เติมเต็มความอร่อยได้ยกกล่อง',
+ '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, NULL, NULL),
+
+('PR002', 'Tasty Savings', 'FIXED',
+ 'อร่อยคุ้มค่าทุกคำสั่งซื้อ เมื่อช้อปครบ 300.- รับส่วนลดท้ายบิลทันที 10.-',
+ '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, NULL, NULL),
+
+('PR003', '9.9 Mega Delight', 'BUY_X_GET_Y',
+ 'ปรากฏการณ์ความคุ้มแห่งปี โปรแรง 9 แถม 9! เฉพาะวันที่ 9 เดือน 9 วันเดียวเท่านั้น',
+ '2026-09-09 00:00:00', '2026-09-09 23:59:59', 1, NULL, NULL),
+
+('PR004', 'Member Privilege', 'MEMBER',
+ 'เอกสิทธิ์เฉพาะคุณ ใช้คะแนนสะสม 50 แต้ม แลกรับสิทธิ์ซื้อเครื่องดื่ม 1 แถม 1',
+ '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, NULL, NULL),
+
+('PR005', 'Welcome to Family', 'MEMBER',
+ 'เริ่มต้นความอร่อยกับเรา สมัครสมาชิกวันนี้ รับฟรี! Signature Soft Cookie 1 ชิ้น',
+ '2026-01-01 00:00:00', '2027-12-31 23:59:59', 1, NULL, NULL)
+ON DUPLICATE KEY UPDATE
+  name        = VALUES(name),
+  promo_type  = VALUES(promo_type),
+  description = VALUES(description),
+  start_at    = VALUES(start_at),
+  end_at      = VALUES(end_at),
+  is_active   = VALUES(is_active),
+  updated_at  = CURRENT_TIMESTAMP;
+
+-- =========================================
+-- 2) Promotion Rules
+-- ลบกฎเก่าของ PR001-PR005 ก่อน (กันซ้ำเวลา rerun)
+-- =========================================
+DELETE pr
+FROM promotion_rules pr
+JOIN promotions p ON p.promotion_id = pr.promotion_id
+WHERE p.promo_code IN ('PR001','PR002','PR003','PR004','PR005');
+
+-- PR001: ซื้อ 10 แถม 1
+INSERT INTO promotion_rules
+(promotion_id, min_order_amount, discount_percent, discount_amount, buy_qty, free_qty, free_product_id, member_only, max_redemptions, max_redemptions_per_user)
+SELECT p.promotion_id, NULL, NULL, NULL, 10, 1, NULL, 0, NULL, NULL
+FROM promotions p
+WHERE p.promo_code = 'PR001';
+
+-- PR002: ครบ 300 ลด 10 บาท
+INSERT INTO promotion_rules
+(promotion_id, min_order_amount, discount_percent, discount_amount, buy_qty, free_qty, free_product_id, member_only, max_redemptions, max_redemptions_per_user)
+SELECT p.promotion_id, 300.00, NULL, 10.00, NULL, NULL, NULL, 0, NULL, NULL
+FROM promotions p
+WHERE p.promo_code = 'PR002';
+
+-- PR003: 9 แถม 9 (วันเดียว)
+INSERT INTO promotion_rules
+(promotion_id, min_order_amount, discount_percent, discount_amount, buy_qty, free_qty, free_product_id, member_only, max_redemptions, max_redemptions_per_user)
+SELECT p.promotion_id, NULL, NULL, NULL, 9, 9, NULL, 0, NULL, NULL
+FROM promotions p
+WHERE p.promo_code = 'PR003';
+
+-- PR004: สมาชิกเท่านั้น เครื่องดื่ม 1 แถม 1 (อิงสินค้า P006 Uji Matcha Latte)
+INSERT INTO promotion_rules
+(promotion_id, min_order_amount, discount_percent, discount_amount, buy_qty, free_qty, free_product_id, member_only, max_redemptions, max_redemptions_per_user)
+SELECT p.promotion_id, NULL, NULL, NULL, 1, 1,
+       (SELECT product_id FROM products WHERE product_code = 'P006' LIMIT 1),
+       1, NULL, NULL
+FROM promotions p
+WHERE p.promo_code = 'PR004';
+
+-- PR005: สมาชิกใหม่รับฟรี Signature Soft Cookie 1 ชิ้น (อิงสินค้า P004)
+INSERT INTO promotion_rules
+(promotion_id, min_order_amount, discount_percent, discount_amount, buy_qty, free_qty, free_product_id, member_only, max_redemptions, max_redemptions_per_user)
+SELECT p.promotion_id, NULL, NULL, NULL, NULL, 1,
+       (SELECT product_id FROM products WHERE product_code = 'P004' LIMIT 1),
+       1, NULL, 1
+FROM promotions p
+WHERE p.promo_code = 'PR005';
+
+COMMIT;
